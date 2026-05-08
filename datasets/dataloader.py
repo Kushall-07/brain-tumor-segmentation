@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader, Dataset
 from monai.data import list_data_collate
 from monai.transforms import (
     CastToTyped,
-    CenterSpatialCropd,
     Compose,
     EnsureChannelFirstd,
     EnsureTyped,
@@ -57,7 +56,7 @@ class _BraTSAsDict(Dataset):
 def get_train_transforms(patch_size: tuple[int, int, int] = (96, 96, 96)) -> Compose:
     return Compose(
         [
-            EnsureChannelFirstd(keys=["image"], channel_dim=0),
+            EnsureChannelFirstd(keys=["label"], channel_dim="no_channel"),
             EnsureTyped(keys=["image", "label"]),
             CastToTyped(keys=["image", "label"], dtype=(torch.float32, torch.int64)),
             SpatialPadd(keys=["image", "label"], spatial_size=patch_size),
@@ -76,11 +75,10 @@ def get_train_transforms(patch_size: tuple[int, int, int] = (96, 96, 96)) -> Com
 def get_val_transforms(patch_size: tuple[int, int, int] = (96, 96, 96)) -> Compose:
     return Compose(
         [
-            EnsureChannelFirstd(keys=["image"], channel_dim=0),
+            EnsureChannelFirstd(keys=["label"], channel_dim="no_channel"),
             EnsureTyped(keys=["image", "label"]),
             CastToTyped(keys=["image", "label"], dtype=(torch.float32, torch.int64)),
             SpatialPadd(keys=["image", "label"], spatial_size=patch_size),
-            CenterSpatialCropd(keys=["image", "label"], roi_size=patch_size),
         ]
     )
 

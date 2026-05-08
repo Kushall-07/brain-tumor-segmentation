@@ -144,7 +144,7 @@ class BraTSDataset(Dataset[Tuple[torch.Tensor, torch.Tensor, str]]):
         self,
         root_dir: str | Path,
         case_dirs: Optional[Sequence[str | Path]] = None,
-        modalities: Sequence[str] = ("t1", "t1ce", "t2", "flair"),
+        modalities: Sequence[str] = ("t1n", "t1c", "t2w", "t2f"),
         seg_name: str = "seg",
         transforms: Optional[Callable[[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]] = None,
         normalize: bool = True,
@@ -251,6 +251,5 @@ class BraTSDataset(Dataset[Tuple[torch.Tensor, torch.Tensor, str]]):
 
         if self.transforms is not None:
             image, mask = self.transforms(image, mask)
-
         return image, mask, case_id
 

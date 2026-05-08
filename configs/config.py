@@ -17,6 +17,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from monai.losses import FocalLoss
 
 
 def get_device() -> torch.device:
@@ -39,6 +40,10 @@ USE_MIXED_PRECISION: bool = True
 # Checkpoint behavior.
 SAVE_BEST_ONLY: bool = True
 
+# Loss selection.
+USE_FOCAL_LOSS: bool = False
+FOCAL_GAMMA: float = 2.0
+
 
 # -------------------------------
 # Dataset settings
@@ -47,13 +52,13 @@ SAVE_BEST_ONLY: bool = True
 # Project root = two levels up from this file: <root>/configs/config.py
 PROJECT_ROOT: Path = Path(__file__).resolve().parents[1]
 
-# Update these paths to match your local dataset layout.
-DATA_ROOT: Path = PROJECT_ROOT / "data"
-RAW_DATA_DIR: Path = DATA_ROOT / "raw"
-PROCESSED_DATA_DIR: Path = DATA_ROOT / "processed"
+DATA_ROOT: Path = PROJECT_ROOT.parent / "BraTS"
+TRAIN_DIR: Path = DATA_ROOT / "Training"
+VAL_DIR: Path = DATA_ROOT / "Validation"
+TEST_DIR: Path = DATA_ROOT / "Testing"
 
 # MRI modalities used for BraTS-style inputs.
-MODALITIES: tuple[str, ...] = ("t1", "t1ce", "t2", "flair")
+MODALITIES: tuple[str, ...] = ("t1n", "t1c", "t2w", "t2f")
 INPUT_CHANNELS: int = 4
 
 
@@ -73,12 +78,29 @@ PIN_MEMORY: bool = True
 # Patch size chosen to fit common 6GB GPUs for 3D U-Net style models.
 PATCH_SIZE: tuple[int, int, int] = (96, 96, 96)
 
+# Model selection
+# - baseline_unet: simple ConvBlock U-Net
+# - residual_unet: residual + attention-gated U-Net (default, matches previous behavior)
+# - swinunetr: transformer-based MONAI SwinUNETR
+MODEL_NAME: str = "residual_unet"
+
+# CNN model widths
+BASELINE_UNET_FEATURES: tuple[int, int, int, int] = (16, 32, 64, 128)
+RESIDUAL_UNET_FEATURES: tuple[int, int, int, int] = (32, 64, 128, 256)
+
+# SwinUNETR tuning (memory-friendly for 96^3 patches on 6GB VRAM)
+SWIN_FEATURE_SIZE: int = 24
+SWIN_USE_CHECKPOINT: bool = True
+
 BATCH_SIZE: int = 1
-NUM_EPOCHS: int = 100
+NUM_EPOCHS: int = 75
 LEARNING_RATE: float = 1e-4
 
 # Number of classes after label remapping (e.g., WT/TC/ET).
 NUM_CLASSES: int = 3
+
+# CrossEntropy class weights (background should be lower than tumor classes).
+CE_CLASS_WEIGHTS: tuple[float, ...] = (0.2, 1.0, 2.0)
 
 # AdamW optimizer settings.
 WEIGHT_DECAY: float = 1e-2
@@ -113,6 +135,8 @@ class DiceLoss(nn.Module):
 
     def forward(self, logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         probs = torch.softmax(logits, dim=1)
+        if target.ndim == 5 and int(target.shape[1]) == 1:
+            target = target.squeeze(1)
         target_1h = F.one_hot(target.long(), num_classes=self.num_classes).permute(0, 4, 1, 2, 3)
         target_1h = target_1h.to(dtype=probs.dtype)
 
@@ -133,16 +157,70 @@ class DiceCrossEntropyLoss(nn.Module):
         num_classes: int,
         dice_weight: float = 1.0,
         ce_weight: float = 1.0,
+        ce_class_weights: tuple[float, ...] | None = None,
         smooth: float = 1.0,
     ) -> None:
         super().__init__()
         self.dice = DiceLoss(num_classes=num_classes, smooth=smooth)
-        self.ce = nn.CrossEntropyLoss()
+        if ce_class_weights is not None:
+            if len(ce_class_weights) != int(num_classes):
+                raise ValueError(
+                    f"Expected ce_class_weights length {int(num_classes)}, got {len(ce_class_weights)}: {ce_class_weights}"
+                )
+            self.register_buffer("ce_class_weights", torch.tensor(ce_class_weights, dtype=torch.float32))
+        else:
+            self.ce_class_weights = None
+
+        self.ce = nn.CrossEntropyLoss(weight=self.ce_class_weights)
         self.dice_weight = dice_weight
         self.ce_weight = ce_weight
 
     def forward(self, logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if target.ndim == 5 and int(target.shape[1]) == 1:
+            target = target.squeeze(1)
         return self.dice_weight * self.dice(logits, target) + self.ce_weight * self.ce(logits, target)
+
+
+class DiceFocalLoss(nn.Module):
+    """Combined Dice + Focal loss."""
+
+    def __init__(
+        self,
+        num_classes: int,
+        dice_weight: float = 1.0,
+        focal_weight: float = 1.0,
+        focal_gamma: float = FOCAL_GAMMA,
+        focal_class_weights: tuple[float, ...] | None = None,
+        smooth: float = 1.0,
+    ) -> None:
+        super().__init__()
+        self.dice = DiceLoss(num_classes=num_classes, smooth=smooth)
+
+        if focal_class_weights is not None:
+            if len(focal_class_weights) != int(num_classes):
+                raise ValueError(
+                    f"Expected focal_class_weights length {int(num_classes)}, got {len(focal_class_weights)}: {focal_class_weights}"
+                )
+            self.register_buffer(
+                "focal_class_weights", torch.tensor(focal_class_weights, dtype=torch.float32)
+            )
+        else:
+            self.focal_class_weights = None
+
+        self.focal = FocalLoss(
+            include_background=True,
+            to_onehot_y=True,
+            softmax=True,
+            gamma=float(focal_gamma),
+            weight=self.focal_class_weights,
+        )
+        self.dice_weight = float(dice_weight)
+        self.focal_weight = float(focal_weight)
+
+    def forward(self, logits: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if target.ndim == 5 and int(target.shape[1]) == 1:
+            target = target.squeeze(1)
+        return self.dice_weight * self.dice(logits, target) + self.focal_weight * self.focal(logits, target)
 
 
 def build_optimizer(model: nn.Module, lr: float = LEARNING_RATE) -> torch.optim.Optimizer:
@@ -152,7 +230,9 @@ def build_optimizer(model: nn.Module, lr: float = LEARNING_RATE) -> torch.optim.
 
 def build_loss() -> nn.Module:
     """Create the Dice + CrossEntropy loss."""
-    return DiceCrossEntropyLoss(num_classes=NUM_CLASSES)
+    if USE_FOCAL_LOSS:
+        return DiceFocalLoss(num_classes=NUM_CLASSES, focal_class_weights=CE_CLASS_WEIGHTS)
+    return DiceCrossEntropyLoss(num_classes=NUM_CLASSES, ce_class_weights=CE_CLASS_WEIGHTS)
 
 
 # -------------------------------
@@ -167,12 +247,17 @@ class Config:
     use_mixed_precision: bool = USE_MIXED_PRECISION
     save_best_only: bool = SAVE_BEST_ONLY
 
-    raw_data_dir: Path = RAW_DATA_DIR
-    processed_data_dir: Path = PROCESSED_DATA_DIR
+    raw_data_dir: Path = TRAIN_DIR
+    processed_data_dir: Path = DATA_ROOT
 
     modalities: tuple[str, ...] = MODALITIES
     input_channels: int = INPUT_CHANNELS
     patch_size: tuple[int, int, int] = PATCH_SIZE
+    model_name: str = MODEL_NAME
+    baseline_unet_features: tuple[int, int, int, int] = BASELINE_UNET_FEATURES
+    residual_unet_features: tuple[int, int, int, int] = RESIDUAL_UNET_FEATURES
+    swin_feature_size: int = SWIN_FEATURE_SIZE
+    swin_use_checkpoint: bool = SWIN_USE_CHECKPOINT
 
     batch_size: int = BATCH_SIZE
     num_workers: int = NUM_WORKERS

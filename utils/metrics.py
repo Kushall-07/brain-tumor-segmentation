@@ -9,6 +9,8 @@ def multiclass_dice_score_3d(
     target: torch.Tensor,
     smooth: float = 1.0,
 ) -> float:
+    if target.ndim == 5 and int(target.shape[1]) == 1:
+        target = target.squeeze(1)
     if logits.ndim != 5:
         raise ValueError(f"Expected logits shape [B, C, D, H, W], got {tuple(logits.shape)}")
     if target.ndim != 4:
@@ -36,8 +38,9 @@ def multiclass_dice_score_3d(
         target_sum = target_c.sum(dim=dims)
 
         dice_c = (2.0 * intersection + smooth) / (pred_sum + target_sum + smooth)
+        dice_c = torch.nan_to_num(dice_c, nan=0.0)
         dice_c = dice_c.mean()
         dice_per_class.append(dice_c)
 
-    mean_dice = torch.stack(dice_per_class).mean()
+    mean_dice = torch.nanmean(torch.stack(dice_per_class))
     return float(mean_dice.detach().item())
