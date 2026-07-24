@@ -68,7 +68,7 @@ export default function Results() {
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true);
     try {
-      await generateReport(jobId, results);
+      await api.generateReport(jobId, results);
     } catch (err) {
       console.error('Report generation failed:', err);
     } finally {
