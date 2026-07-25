@@ -11,21 +11,37 @@ import torch
 import torch.nn as nn
 from monai.inferers import sliding_window_inference
 
-from configs.config import INPUT_CHANNELS, NUM_CLASSES, PATCH_SIZE
+from configs.config import (
+    BASELINE_UNET_FEATURES,
+    INPUT_CHANNELS,
+    MODEL_NAME,
+    NUM_CLASSES,
+    PATCH_SIZE,
+    RESIDUAL_UNET_FEATURES,
+    SWIN_FEATURE_SIZE,
+    SWIN_USE_CHECKPOINT,
+)
 from datasets.brats_dataset import BraTSDataset
-from models.unet3d import UNet3D
+from models.model_factory import build_model
 
 
 def get_device() -> torch.device:
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def build_model(
-    in_channels: int = INPUT_CHANNELS,
-    out_channels: int = NUM_CLASSES,
+def build_segmentation_model(
     device: Optional[torch.device] = None,
 ) -> nn.Module:
-    model = UNet3D(in_channels=int(in_channels), out_channels=int(out_channels))
+    model = build_model(
+        model_name=MODEL_NAME,
+        in_channels=INPUT_CHANNELS,
+        out_channels=NUM_CLASSES,
+        patch_size=PATCH_SIZE,
+        baseline_features=BASELINE_UNET_FEATURES,
+        residual_features=RESIDUAL_UNET_FEATURES,
+        swin_feature_size=SWIN_FEATURE_SIZE,
+        swin_use_checkpoint=SWIN_USE_CHECKPOINT,
+    )
     if device is not None:
         model = model.to(device)
     return model
@@ -129,6 +145,53 @@ def save_nifti_probabilities(
     nib.save(out_img, str(out_path))
 
 
+def predict_case(
+    data_dir: str | Path,
+    checkpoint_path: str | Path,
+    out_dir: str | Path,
+    case_index: int = 0,
+    save_probs: bool = False,
+) -> dict[str, str | None]:
+    """Run inference on a single case and return results.
+
+    Args:
+        data_dir: Root directory containing case subfolders
+        checkpoint_path: Path to trained checkpoint (.pt)
+        out_dir: Output directory for results
+        case_index: Index of case in data_dir to run inference on
+        save_probs: If True, save class probabilities as NIfTI
+
+    Returns:
+        Dictionary with keys: case_id, mask_path, probability_path
+    """
+    device = get_device()
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    model = build_segmentation_model(device=device)
+    load_checkpoint(model=model, checkpoint_path=checkpoint_path, device=device)
+
+    image, case_id, case_dir = load_single_case(data_dir, case_index=case_index)
+    ref_img = _case_reference_nii(case_dir)
+
+    pred_mask, probs = run_sliding_window(model=model, image=image, device=device, roi_size=PATCH_SIZE)
+
+    mask_path = out_dir / f"{case_id}_pred.nii.gz"
+    save_nifti_mask(pred_mask, reference_img=ref_img, out_path=mask_path)
+
+    probability_path = None
+    if save_probs:
+        probability_path = out_dir / f"{case_id}_probs.nii.gz"
+        save_nifti_probabilities(probs, reference_img=ref_img, out_path=probability_path)
+
+    return {
+        "case_id": case_id,
+        "mask_path": str(mask_path),
+        "probability_path": str(probability_path) if probability_path else None,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="3D Brain Tumor Segmentation Inference (BraTS)")
     parser.add_argument("--data_dir", type=str, required=True, help="Root directory containing case subfolders")
@@ -138,29 +201,17 @@ def main() -> None:
     parser.add_argument("--save_probs", action="store_true", help="If set, save class probabilities as NIfTI")
     args = parser.parse_args()
 
-    device = get_device()
+    result = predict_case(
+        data_dir=args.data_dir,
+        checkpoint_path=args.checkpoint,
+        out_dir=args.out_dir,
+        case_index=args.case_index,
+        save_probs=args.save_probs,
+    )
 
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    model = build_model(device=device)
-    load_checkpoint(model=model, checkpoint_path=args.checkpoint, device=device)
-
-    image, case_id, case_dir = load_single_case(args.data_dir, case_index=args.case_index)
-    ref_img = _case_reference_nii(case_dir)
-
-    pred_mask, probs = run_sliding_window(model=model, image=image, device=device, roi_size=PATCH_SIZE)
-
-    mask_path = out_dir / f"{case_id}_pred.nii.gz"
-    save_nifti_mask(pred_mask, reference_img=ref_img, out_path=mask_path)
-
-    if args.save_probs:
-        probs_path = out_dir / f"{case_id}_probs.nii.gz"
-        save_nifti_probabilities(probs, reference_img=ref_img, out_path=probs_path)
-
-    print(f"Saved mask: {mask_path}")
-    if args.save_probs:
-        print(f"Saved probabilities: {probs_path}")
+    print(f"Saved mask: {result['mask_path']}")
+    if result['probability_path']:
+        print(f"Saved probabilities: {result['probability_path']}")
 
 
 if __name__ == "__main__":
