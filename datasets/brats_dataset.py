@@ -121,12 +121,48 @@ def _find_modality_file(case_dir: Path, modality: str) -> Path:
     Supports typical BraTS naming like:
     - *_t1.nii.gz, *_t1ce.nii.gz, *_t2.nii.gz, *_flair.nii.gz
     - *_seg.nii.gz (or *_label.nii.gz)
+    - BraTS-GLI-xxxxx-t1n.nii.gz, BraTS-GLI-xxxxx-t1c.nii.gz, etc.
     """
+    import re
 
-    patterns = [f"*{modality}*.nii.gz", f"*{modality}*.nii"]
-    matches: list[Path] = []
-    for p in patterns:
-        matches.extend(sorted(case_dir.glob(p)))
+    # Mapping from simplified modality names to their BraTS equivalents
+    modality_map = {
+        "t1": ["t1", "t1n"],
+        "t1ce": ["t1ce", "t1c"],
+        "t2": ["t2", "t2w"],
+        "flair": ["flair", "t2f"],
+        "seg": ["seg", "label"],
+    }
+
+    # Get the possible names for this modality
+    possible_names = modality_map.get(modality, [modality])
+
+    # Build regex pattern that matches the modality as a whole word
+    # This prevents "t1" from matching "t1ce"
+    patterns = []
+    for name in possible_names:
+        # Match the modality followed by a non-alphanumeric character or end of string
+        # Also match if preceded by a non-alphanumeric character or start of string
+        pattern = re.compile(rf"(?:^|[^a-zA-Z0-9]){re.escape(name)}(?:[^a-zA-Z0-9]|$)")
+        patterns.append(pattern)
+
+    # Find all NIfTI files in the directory
+    all_files = sorted(case_dir.glob("*.nii.gz")) + sorted(case_dir.glob("*.nii"))
+
+    # Filter files that match any of the patterns
+    matches = []
+    for file_path in all_files:
+        filename = file_path.name
+        # Remove extensions to get the base filename
+        if filename.endswith(".nii.gz"):
+            filename = filename[:-7]
+        elif filename.endswith(".nii"):
+            filename = filename[:-4]
+        
+        for pattern in patterns:
+            if pattern.search(filename):
+                matches.append(file_path)
+                break
 
     if len(matches) == 0:
         raise FileNotFoundError(f"Could not find '{modality}' NIfTI file in: {case_dir}")

@@ -1,19 +1,17 @@
 import { Outlet } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import Navbar from "../components/Navbar";
+import Footer from "../components/layout/Footer";
 
-export default function MainLayout() {
+export function MainLayout() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       <Navbar />
-      <main className="pt-16 min-h-[calc(100vh-4rem)]">
+      <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-slate-800 py-6 px-4">
-        <div className="max-w-7xl mx-auto text-center text-sm text-slate-500">
-          <p>Brain Tumor Segmentation AI &copy; 2025</p>
-          <p className="mt-1">Powered by SwinUNETR &bull; For Research Use Only</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
+
+export default MainLayout;

@@ -1,101 +1,194 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import ResultsViewer from '../components/ResultsViewer';
-import api from '../services/api';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { CheckCircle, Download, ArrowLeft, FileText, AlertCircle } from 'lucide-react';
+import predictionService from '../services/predictionService';
 
 export default function Results() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [results, setResults] = useState(null);
-  const [jobId, setJobId] = useState(null);
+  const predictionState = location.state;
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   useEffect(() => {
-    if (location.state?.results) {
-      setResults(location.state.results);
-      setJobId(location.state.jobId);
-    } else if (location.state?.jobId) {
-      // If we only have jobId, fetch results
-      setJobId(location.state.jobId);
-      fetchResults(location.state.jobId);
+    if (!predictionState?.result) {
+      toast.error('No prediction data found', {
+        position: 'top-center',
+      });
+      navigate('/predict', { replace: true });
     } else {
-      // No results or jobId, redirect to home
-      navigate('/');
+      toast.success('Prediction completed successfully!', {
+        position: 'top-center',
+        duration: 4000,
+      });
     }
-  }, [location, navigate]);
+  }, [navigate, predictionState]);
 
-  const fetchResults = async (id) => {
-    try {
-      // In a real app, this would fetch from the API
-      // For now, use mock data
-      const mockResults = {
-        jobId: id,
-        status: 'completed',
-        processingTime: 2.3,
-        volumes: {
-          'Necrotic Core': 12.5,
-          'Edema': 45.2,
-          'Enhancing Tumor': 8.3,
-          'Whole Tumor': 66.0,
-          'Tumor Core': 20.8,
-          'ET': 8.3
-        },
-        diceScores: {
-          'Whole Tumor': 0.91,
-          'Tumor Core': 0.84,
-          'Enhancing Tumor': 0.80
-        }
-      };
-      setResults(mockResults);
-    } catch (err) {
-      console.error('Failed to fetch results:', err);
-      navigate('/');
-    }
-  };
+  if (!predictionState?.result) {
+    return null;
+  }
+
+  const { result } = predictionState;
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      await api.downloadResults(jobId);
-    } catch (err) {
-      console.error('Download failed:', err);
+      // Extract relative path from the full mask_path
+      // Backend returns full path like "outputs/predictions/session_id/case_id_pred.nii.gz"
+      // We need to extract the part after "outputs/predictions/"
+      const relativePath = result.mask_path.replace('outputs/predictions/', '');
+      
+      // Download the file as a blob
+      const blob = await predictionService.downloadPrediction(relativePath);
+      
+      // Create a download link and trigger it
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Extract filename from the path
+      const filename = result.mask_path.split('/').pop();
+      link.download = filename;
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Download completed successfully', {
+        position: 'top-center',
+      });
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      let errorMessage = 'Download failed';
+      
+      if (error.status === 404) {
+        errorMessage = 'File not found on server';
+      } else if (error.status === 403) {
+        errorMessage = 'Access denied';
+      } else if (error.status === 0) {
+        errorMessage = 'Network error - unable to connect to server';
+      } else {
+        errorMessage = error.message || 'Download failed';
+      }
+      
+      toast.error(errorMessage, {
+        position: 'top-center',
+      });
     } finally {
       setIsDownloading(false);
     }
   };
 
-  const handleGenerateReport = async () => {
-    setIsGeneratingReport(true);
-    try {
-      await api.generateReport(jobId, results);
-    } catch (err) {
-      console.error('Report generation failed:', err);
-    } finally {
-      setIsGeneratingReport(false);
-    }
+  const handlePredictAnother = () => {
+    navigate('/predict');
   };
 
-  if (!results) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-500/20 mb-6">
-            <svg className="w-8 h-8 text-primary-500 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="flex items-center justify-center mb-4">
+            <CheckCircle className="text-green-600" size={64} />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Loading Results...</h2>
-          <p className="text-slate-400">Fetching segmentation results</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Prediction Successful
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Brain tumor segmentation completed
+          </p>
+        </div>
+
+        {/* Results Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+            <FileText className="mr-2 text-indigo-600" size={24} />
+            Prediction Details
+          </h2>
+
+          <div className="space-y-4">
+            {/* Case ID */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm font-medium text-gray-500 mb-1">Case ID</p>
+              <p className="text-lg font-semibold text-gray-900">{result.case_id}</p>
+            </div>
+
+            {/* Mask Path */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm font-medium text-gray-500 mb-1">Segmentation Mask</p>
+              <p className="text-sm text-gray-900 break-all font-mono">{result.mask_path}</p>
+            </div>
+
+            {/* Probability Path */}
+            {result.probability_path && (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm font-medium text-gray-500 mb-1">Probability Map</p>
+                <p className="text-sm text-gray-900 break-all font-mono">{result.probability_path}</p>
+              </div>
+            )}
+
+            {/* Info Note */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start">
+                <AlertCircle className="text-blue-500 mt-0.5 mr-2 flex-shrink-0" size={20} />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">Note</p>
+                  <p>
+                    The segmentation mask has been saved to the outputs directory. 
+                    Use the download button below to retrieve the file.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className={`
+              px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200
+              flex items-center justify-center space-x-2
+              ${isDownloading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg'
+              }
+            `}
+          >
+            {isDownloading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <span>Downloading...</span>
+              </>
+            ) : (
+              <>
+                <Download size={20} />
+                <span>Download Prediction</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handlePredictAnother}
+            className="px-6 py-3 rounded-lg font-semibold text-white bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center space-x-2"
+          >
+            <ArrowLeft size={20} />
+            <span>Predict Another Patient</span>
+          </button>
+        </div>
+
+        {/* Footer Info */}
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>Brain Tumor Segmentation AI System</p>
+          <p className="mt-1">Powered by 3D U-Net and MONAI</p>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="h-screen flex flex-col">
-      <ResultsViewer results={results} jobId={jobId} />
     </div>
   );
 }
