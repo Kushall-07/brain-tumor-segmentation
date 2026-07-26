@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, UploadFile
 
-from api.services import predict_case_service
+from api.schemas import PredictRequest
+from api.services import predict_case_service, predict_case_upload_service
 
 router = APIRouter()
 
@@ -20,14 +20,6 @@ def health():
     }
 
 
-class PredictRequest(BaseModel):
-    data_dir: str
-    checkpoint_path: str
-    output_dir: str
-    case_index: int = 0
-    save_probabilities: bool = False
-
-
 @router.post("/predict")
 def predict(request: PredictRequest):
     try:
@@ -37,6 +29,40 @@ def predict(request: PredictRequest):
             output_dir=request.output_dir,
             case_index=request.case_index,
             save_probabilities=request.save_probabilities,
+        )
+
+        return {
+            "status": "success",
+            "result": result,
+        }
+
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+
+
+@router.post("/predict/upload")
+def predict_upload(
+    flair: UploadFile,
+    t1: UploadFile,
+    t1ce: UploadFile,
+    t2: UploadFile,
+    checkpoint_path: str,
+    save_probabilities: bool = False,
+):
+    try:
+        result = predict_case_upload_service(
+            flair=flair,
+            t1=t1,
+            t1ce=t1ce,
+            t2=t2,
+            checkpoint_path=checkpoint_path,
+            save_probabilities=save_probabilities,
         )
 
         return {

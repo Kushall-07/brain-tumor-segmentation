@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from api.utils import cleanup_upload_session, create_upload_session, save_uploaded_file
 from inference.predict import predict_case
 
 
@@ -53,3 +54,70 @@ def predict_case_service(
         return result
     except Exception as e:
         raise RuntimeError(f"Inference failed: {str(e)}") from e
+
+
+def predict_case_upload_service(
+    flair,
+    t1,
+    t1ce,
+    t2,
+    checkpoint_path: str | Path,
+    save_probabilities: bool = False,
+) -> dict[str, str | None]:
+    """Service layer for brain tumor segmentation inference with file uploads.
+
+    Args:
+        flair: Uploaded FLAIR MRI file
+        t1: Uploaded T1 MRI file
+        t1ce: Uploaded T1ce MRI file
+        t2: Uploaded T2 MRI file
+        checkpoint_path: Path to trained checkpoint (.pt)
+        save_probabilities: If True, save class probabilities as NIfTI
+
+    Returns:
+        Dictionary with keys: case_id, mask_path, probability_path
+
+    Raises:
+        FileNotFoundError: If checkpoint_path does not exist
+        RuntimeError: If inference fails for any reason
+    """
+    upload_session = None
+    try:
+        # Create upload session
+        upload_session = create_upload_session()
+
+        # Create patient folder inside upload session
+        patient_folder = upload_session / "BraTS-Patient"
+        patient_folder.mkdir(parents=True, exist_ok=True)
+
+        # Save uploaded files preserving original filenames
+        save_uploaded_file(flair, patient_folder)
+        save_uploaded_file(t1, patient_folder)
+        save_uploaded_file(t1ce, patient_folder)
+        save_uploaded_file(t2, patient_folder)
+
+        # Validate checkpoint exists
+        checkpoint_path_obj = Path(checkpoint_path)
+        if not checkpoint_path_obj.exists():
+            raise FileNotFoundError(f"Checkpoint file does not exist: {checkpoint_path_obj}")
+
+        # Create results directory
+        results_dir = upload_session / "results"
+        results_dir.mkdir(parents=True, exist_ok=True)
+
+        # Call inference
+        result = predict_case(
+            data_dir=upload_session,
+            checkpoint_path=checkpoint_path,
+            out_dir=results_dir,
+            case_index=0,
+            save_probs=save_probabilities,
+        )
+
+        return result
+    except Exception as e:
+        raise RuntimeError(f"Inference failed: {str(e)}") from e
+    finally:
+        # Always cleanup upload session
+        if upload_session is not None:
+            cleanup_upload_session(upload_session)
