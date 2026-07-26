@@ -21,7 +21,7 @@ from configs.config import (
     SWIN_FEATURE_SIZE,
     SWIN_USE_CHECKPOINT,
 )
-from datasets.brats_dataset import BraTSDataset
+from datasets.brats_inference import BraTSInferenceDataset
 from models.model_factory import build_model
 
 
@@ -57,8 +57,8 @@ def load_checkpoint(model: nn.Module, checkpoint_path: str | Path, device: torch
 
 
 def load_single_case(data_dir: str | Path, case_index: int = 0) -> Tuple[torch.Tensor, str, Path]:
-    ds = BraTSDataset(root_dir=data_dir)
-    image, _mask, case_id = ds[int(case_index)]
+    ds = BraTSInferenceDataset(root_dir=data_dir)
+    image, case_id = ds[int(case_index)]
 
     if image.ndim != 4 or int(image.shape[0]) != 4:
         raise ValueError(f"Expected image shape [4, D, H, W], got: {tuple(image.shape)}")

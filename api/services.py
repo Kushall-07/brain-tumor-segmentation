@@ -90,11 +90,11 @@ def predict_case_upload_service(
         patient_folder = upload_session / "BraTS-Patient"
         patient_folder.mkdir(parents=True, exist_ok=True)
 
-        # Save uploaded files preserving original filenames
-        save_uploaded_file(flair, patient_folder)
-        save_uploaded_file(t1, patient_folder)
-        save_uploaded_file(t1ce, patient_folder)
-        save_uploaded_file(t2, patient_folder)
+        # Save uploaded files with standardized filenames
+        save_uploaded_file(t1, patient_folder / "t1.nii.gz")
+        save_uploaded_file(t1ce, patient_folder / "t1ce.nii.gz")
+        save_uploaded_file(t2, patient_folder / "t2.nii.gz")
+        save_uploaded_file(flair, patient_folder / "flair.nii.gz")
 
         # Validate checkpoint exists
         checkpoint_path_obj = Path(checkpoint_path)
