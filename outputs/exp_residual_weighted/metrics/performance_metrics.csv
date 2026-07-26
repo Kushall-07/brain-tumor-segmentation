@@ -1,0 +1,6 @@
+Metric,Value
+Best Dice,0.7475352730881423
+Final Dice,0.7437617808859796
+Best Epoch,60
+Minimum Train Loss,0.302588804513216
+Final Learning Rate,3.90625e-07
