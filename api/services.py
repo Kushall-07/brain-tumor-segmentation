@@ -5,6 +5,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+import shutil
 
 from api.exceptions import CheckpointError, InferenceError, ValidationError
 from api.schemas import MODALITY_FLAIR, MODALITY_T1, MODALITY_T1CE, MODALITY_T2
@@ -99,7 +100,7 @@ def predict_case_upload_service(
         save_probabilities: If True, save class probabilities as NIfTI
 
     Returns:
-        Dictionary with keys: case_id, mask_path, probability_path
+        Dictionary with keys: case_id, mask_path, mri_path, probability_path
 
     Raises:
         ValidationError: If file validation fails
@@ -188,14 +189,22 @@ def predict_case_upload_service(
 
         logger.info(f"[{request_id}] Prediction verified successfully.")
 
+        # Copy FLAIR file to prediction directory for NiiVue viewer
+        # This must happen BEFORE cleanup_upload_session deletes the upload session
+        flair_copy_path = prediction_dir / "BraTS-Patient_flair.nii.gz"
+        shutil.copy2(modality_paths.flair, flair_copy_path)
+        logger.info(f"[{request_id}] Copied FLAIR to: {flair_copy_path.as_posix()}")
+
         # Normalize paths for stable API responses
         result["mask_path"] = mask_path.as_posix()
+        result["mri_path"] = flair_copy_path.as_posix()
         if result.get("probability_path"):
             result["probability_path"] = Path(result["probability_path"]).as_posix()
 
         metadata = {
             "case_id": result.get("case_id"),
             "mask_path": result["mask_path"],
+            "mri_path": result["mri_path"],
             "probability_path": result.get("probability_path"),
             "request_id": request_id,
             "created_at": datetime.now(timezone.utc).isoformat(),

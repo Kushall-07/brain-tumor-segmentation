@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { CheckCircle, Download, ArrowLeft, FileText, AlertCircle } from 'lucide-react';
 import predictionService from '../services/predictionService';
+import NiiVueViewer from '../components/NiiVueViewer';
 
 export default function Results() {
   const navigate = useNavigate();
@@ -145,6 +146,19 @@ export default function Results() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* MRI Visualization Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+            <FileText className="mr-2 text-indigo-600" size={24} />
+            MRI Visualization
+          </h2>
+
+          <NiiVueViewer
+            mriPath={result.mri_path}
+            maskPath={result.mask_path}
+          />
         </div>
 
         {/* Action Buttons */}
