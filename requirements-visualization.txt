@@ -1,0 +1,5 @@
+# Optional dependencies for 3D interactive visualization (inference/visualize_3d.py)
+plotly>=5.18.0
+scikit-image>=0.22.0
+scipy>=1.11.0
+kaleido>=0.2.1  # PNG export only
