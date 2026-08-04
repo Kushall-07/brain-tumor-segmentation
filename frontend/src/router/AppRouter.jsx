@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import Home from '../pages/Home';
 import PredictPage from '../pages/PredictPage';
+import Processing from '../pages/Processing';
 import Results from '../pages/Results';
 
 /**
@@ -19,6 +20,10 @@ export const router = createBrowserRouter([
       {
         path: 'predict',
         element: <PredictPage />,
+      },
+      {
+        path: 'processing',
+        element: <Processing />,
       },
       {
         path: 'results',

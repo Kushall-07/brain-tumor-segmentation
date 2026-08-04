@@ -9,12 +9,12 @@ const api = axios.create({
 
 export const predictionService = {
   /**
-   * Upload MRI modalities and run brain tumor segmentation
-   * @param {Object} formData - FormData with t1, t1ce, t2, flair files
+   * Start an asynchronous prediction job by uploading MRI modalities
+   * @param {FormData} formData - FormData with t1, t1ce, t2, flair files
    * @param {Object} params - Query parameters (checkpoint_path, save_probabilities)
-   * @returns {Promise<Object>} API response with prediction results
+   * @returns {Promise<Object>} API response with job_id and status
    */
-  async uploadPrediction(formData, params = {}) {
+  async startPrediction(formData, params = {}) {
     try {
       const response = await api.post('/predict/upload', formData, {
         headers: {
@@ -25,26 +25,64 @@ export const predictionService = {
       return response.data;
     } catch (error) {
       if (error.response) {
-        // Server responded with error status
         throw {
           status: error.response.status,
           message: error.response.data.detail || 'Upload failed',
           data: error.response.data,
         };
       } else if (error.request) {
-        // Request made but no response
         throw {
           status: 0,
           message: 'Network error - unable to connect to server',
         };
       } else {
-        // Request setup error
         throw {
           status: 0,
           message: error.message || 'Request failed',
         };
       }
     }
+  },
+
+  /**
+   * Poll the status of an asynchronous prediction job
+   * @param {string} jobId - The job ID returned by startPrediction
+   * @returns {Promise<Object>} Job status with stage, message, result, and error
+   */
+  async getPredictionStatus(jobId) {
+    try {
+      const response = await api.get(`/predict/status/${jobId}`);
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        throw {
+          status: error.response.status,
+          message: error.response.data.detail || 'Status check failed',
+          data: error.response.data,
+        };
+      } else if (error.request) {
+        throw {
+          status: 0,
+          message: 'Network error - unable to connect to server',
+        };
+      } else {
+        throw {
+          status: 0,
+          message: error.message || 'Status request failed',
+        };
+      }
+    }
+  },
+
+  /**
+   * Upload MRI modalities and run brain tumor segmentation (legacy synchronous)
+   * @deprecated Use startPrediction + getPredictionStatus instead
+   * @param {Object} formData - FormData with t1, t1ce, t2, flair files
+   * @param {Object} params - Query parameters (checkpoint_path, save_probabilities)
+   * @returns {Promise<Object>} API response with prediction results
+   */
+  async uploadPrediction(formData, params = {}) {
+    return this.startPrediction(formData, params);
   },
 
   /**

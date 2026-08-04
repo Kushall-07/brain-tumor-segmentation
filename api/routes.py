@@ -4,8 +4,9 @@ from fastapi import APIRouter, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 
 from api.exceptions import CheckpointError, InferenceError, ValidationError
+from api.jobs import get_job
 from api.schemas import PredictRequest
-from api.services import predict_case_service, predict_case_upload_service
+from api.services import predict_case_service, start_prediction_job
 
 router = APIRouter()
 
@@ -77,8 +78,9 @@ def predict_upload(
     checkpoint_path: str,
     save_probabilities: bool = False,
 ):
+    """Start an asynchronous prediction job and return a job_id for polling."""
     try:
-        result = predict_case_upload_service(
+        job = start_prediction_job(
             flair=flair,
             t1=t1,
             t1ce=t1ce,
@@ -87,38 +89,37 @@ def predict_upload(
             save_probabilities=save_probabilities,
         )
 
-        return {
-            "status": "success",
-            "result": result,
-        }
+        return job
 
     except ValidationError as e:
-        # Validation errors (missing modality, invalid extension, empty file, shape mismatch)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=e.client_message,
         )
 
     except CheckpointError as e:
-        # Checkpoint not found
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=e.client_message,
         )
 
-    except InferenceError as e:
-        # Inference failure
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=e.client_message,
-        )
-
     except Exception as e:
-        # Unexpected internal error
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         )
+
+
+@router.get("/predict/status/{job_id}")
+def predict_status(job_id: str):
+    """Return the current status and stage of a prediction job."""
+    job = get_job(job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Prediction job not found",
+        )
+    return job
 
 
 @router.get("/download/{file_path:path}")

@@ -5,7 +5,7 @@ import argparse
 import logging
 import time
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import nibabel as nib
 import numpy as np
@@ -77,6 +77,7 @@ def _run_inference(
     case_id: str,
     save_probs: bool = False,
     roi_size: tuple[int, int, int] = PATCH_SIZE,
+    progress_callback: Callable[[str, str], None] | None = None,
 ) -> dict[str, str | None]:
     """Shared inference logic for both CLI and API pipelines.
 
@@ -93,8 +94,14 @@ def _run_inference(
     Returns:
         Dictionary with keys: case_id, mask_path, probability_path
     """
+    if progress_callback:
+        progress_callback("model_inference", "Running 3D U-Net segmentation")
+
     # Run sliding window inference
     pred_mask, probs = run_sliding_window(model=model, image=image, device=device, roi_size=roi_size)
+
+    if progress_callback:
+        progress_callback("segmentation_generation", "Generating segmentation mask")
 
     # Save segmentation mask
     mask_path = out_dir / f"{case_id}_pred.nii.gz"
@@ -319,6 +326,7 @@ def predict_case_explicit(
     out_dir: str | Path,
     save_probs: bool = False,
     request_id: str | None = None,
+    progress_callback: Callable[[str, str], None] | None = None,
 ) -> dict[str, str | None]:
     """Run inference on explicit modality paths - no filename discovery (API pipeline).
 
@@ -331,6 +339,7 @@ def predict_case_explicit(
         out_dir: Output directory for results
         save_probs: If True, save class probabilities as NIfTI
         request_id: Optional request ID for logging
+        progress_callback: Optional callback invoked as (stage, message) at real pipeline points
 
     Returns:
         Dictionary with keys: case_id, mask_path, probability_path
@@ -352,6 +361,9 @@ def predict_case_explicit(
     load_checkpoint(model=model, checkpoint_path=checkpoint_path, device=device)
     logger.info(f"[{request_id}] LOAD MODEL completed in {time.time() - model_load_start:.2f}s")
 
+    if progress_callback:
+        progress_callback("preprocessing", "Preparing MRI volumes for inference")
+
     # Load modalities
     image_load_start = time.time()
     image, case_id = load_modalities_explicit(t1_path, t1ce_path, t2_path, flair_path)
@@ -370,6 +382,7 @@ def predict_case_explicit(
         out_dir=out_dir,
         case_id=case_id,
         save_probs=save_probs,
+        progress_callback=progress_callback,
     )
     logger.info(f"[{request_id}] INFERENCE completed in {time.time() - inference_start:.2f}s")
     

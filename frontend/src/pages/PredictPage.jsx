@@ -21,15 +21,26 @@ const PredictPage = () => {
   const [uploadStatus, setUploadStatus] = useState('');
   const [apiError, setApiError] = useState(null);
 
+  const clearModalityError = (modality) => {
+    setErrors((prev) => {
+      if (!(modality in prev)) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[modality];
+      return next;
+    });
+  };
+
   const handleFileSelect = (modality, file) => {
     setFiles(prev => ({ ...prev, [modality]: file }));
-    setErrors(prev => ({ ...prev, [modality]: null }));
+    clearModalityError(modality);
     setApiError(null);
   };
 
   const handleFileRemove = (modality) => {
     setFiles(prev => ({ ...prev, [modality]: null }));
-    setErrors(prev => ({ ...prev, [modality]: null }));
+    clearModalityError(modality);
   };
 
   const validateFiles = () => {
@@ -72,45 +83,21 @@ const PredictPage = () => {
 
     setIsSubmitting(true);
     setApiError(null);
-    setUploadStatus('Uploading MRI files...');
+    setUploadStatus('Preparing files...');
 
-    const formData = new FormData();
-    MODALITIES.forEach(modality => {
-      formData.append(modality, files[modality]);
+    // Navigate to processing page with files for the real API call
+    navigate('/processing', { 
+      state: { 
+        files: files 
+      } 
     });
-
-    try {
-      setUploadStatus('Running segmentation model...');
-      
-      const response = await predictionService.uploadPrediction(formData, {
-        checkpoint_path: 'outputs/checkpoints/best.pt',
-        save_probabilities: false,
-      });
-
-      setUploadStatus('Receiving prediction...');
-      
-      // Navigate to results page with response data
-      navigate('/results', { 
-        state: { 
-          result: response.result,
-          files: files 
-        } 
-      });
-
-    } catch (error) {
-      console.error('Prediction error:', error);
-      setApiError({
-        status: error.status,
-        message: error.message,
-      });
-      setUploadStatus('');
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const allFilesSelected = MODALITIES.every(modality => files[modality] !== null);
-  const hasErrors = Object.keys(errors).length > 0;
+  const visibleErrors = Object.entries(errors).filter(
+    ([, message]) => typeof message === 'string' && message.trim().length > 0
+  );
+  const hasErrors = visibleErrors.length > 0;
 
   const getErrorMessage = (status) => {
     switch (status) {
@@ -168,7 +155,7 @@ const PredictPage = () => {
               <div>
                 <p className="font-medium text-red-800">Please fix the following errors:</p>
                 <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
-                  {Object.entries(errors).map(([modality, error]) => (
+                  {visibleErrors.map(([modality, error]) => (
                     <li key={modality}>{error}</li>
                   ))}
                 </ul>

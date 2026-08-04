@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 import shutil
 
 from api.exceptions import CheckpointError, InferenceError, ValidationError
-from api.schemas import MODALITY_FLAIR, MODALITY_T1, MODALITY_T1CE, MODALITY_T2
+from api.jobs import complete_job, create_job, fail_job, update_job
+from api.schemas import MODALITY_FLAIR, MODALITY_T1, MODALITY_T1CE, MODALITY_T2, ModalityPaths
 from api.utils import (
     cleanup_upload_session,
     create_prediction_dir,
@@ -82,6 +85,190 @@ def predict_case_service(
         ) from e
 
 
+def _execute_upload_prediction(
+    *,
+    flair,
+    t1,
+    t1ce,
+    t2,
+    checkpoint_path: str | Path,
+    save_probabilities: bool = False,
+    upload_session: Path | None = None,
+    modality_paths: ModalityPaths | None = None,
+    progress_callback: Callable[[str, str], None] | None = None,
+    request_id: str | None = None,
+) -> dict[str, str | float | None]:
+    """Shared upload prediction pipeline used by sync and async callers.
+
+    When upload_session and modality_paths are provided, file saving is skipped
+    (files were already persisted during the initial request).
+    """
+    if request_id is None:
+        request_id = str(uuid.uuid4())[:8]
+
+    session_created_here = upload_session is None
+
+    try:
+        logger.info(f"[{request_id}] START upload inference service")
+
+        # Validate checkpoint exists
+        checkpoint_path_obj = Path(checkpoint_path)
+        if not checkpoint_path_obj.exists():
+            raise CheckpointError(
+                f"Checkpoint file does not exist: {checkpoint_path_obj}",
+                client_message="Checkpoint file not found",
+            )
+
+        if upload_session is None or modality_paths is None:
+            # Validate uploaded files (extension and size only)
+            UploadValidator.validate_upload(t1, MODALITY_T1)
+            UploadValidator.validate_upload(t1ce, MODALITY_T1CE)
+            UploadValidator.validate_upload(t2, MODALITY_T2)
+            UploadValidator.validate_upload(flair, MODALITY_FLAIR)
+
+            # Check for duplicate uploads
+            UploadValidator.validate_no_duplicate_uploads({
+                MODALITY_T1: t1,
+                MODALITY_T1CE: t1ce,
+                MODALITY_T2: t2,
+                MODALITY_FLAIR: flair,
+            })
+
+            logger.info(f"[{request_id}] Basic upload validation completed")
+
+            # Create upload session
+            upload_session = create_upload_session()
+            logger.info(f"[{request_id}] Created upload session: {upload_session}")
+
+            # Create patient folder inside upload session
+            patient_folder = upload_session / "BraTS-Patient"
+            patient_folder.mkdir(parents=True, exist_ok=True)
+
+            # Save uploaded files with standardized filenames
+            modality_paths = save_modalities(t1, t1ce, t2, flair, patient_folder)
+            logger.info(f"[{request_id}] Saved modalities to: {patient_folder}")
+
+        if progress_callback:
+            progress_callback("validation", "Validating MRI volumes")
+
+        # Validate NIfTI format and shapes
+        UploadValidator.validate_nifti_file(modality_paths.t1)
+        UploadValidator.validate_nifti_file(modality_paths.t1ce)
+        UploadValidator.validate_nifti_file(modality_paths.t2)
+        UploadValidator.validate_nifti_file(modality_paths.flair)
+
+        UploadValidator.validate_modality_shapes({
+            MODALITY_T1: modality_paths.t1,
+            MODALITY_T1CE: modality_paths.t1ce,
+            MODALITY_T2: modality_paths.t2,
+            MODALITY_FLAIR: modality_paths.flair,
+        })
+        logger.info(f"[{request_id}] NIfTI validation completed")
+
+        # Permanent prediction directory (survives upload cleanup)
+        prediction_dir = create_prediction_dir()
+        expected_mask = prediction_dir / "BraTS-Patient_pred.nii.gz"
+        logger.info(f"[{request_id}] Saving prediction to: {expected_mask.as_posix()}")
+
+        # Call inference with explicit paths (no filename discovery)
+        result = predict_case_explicit(
+            t1_path=modality_paths.t1,
+            t1ce_path=modality_paths.t1ce,
+            t2_path=modality_paths.t2,
+            flair_path=modality_paths.flair,
+            checkpoint_path=checkpoint_path,
+            out_dir=prediction_dir,
+            save_probs=save_probabilities,
+            request_id=request_id,
+            progress_callback=progress_callback,
+        )
+
+        mask_path = Path(result["mask_path"])
+        if not mask_path.exists():
+            raise InferenceError(
+                "Prediction file was not created",
+                client_message="Inference completed but output file was not generated",
+            )
+
+        logger.info(f"[{request_id}] Prediction verified successfully.")
+
+        if progress_callback:
+            progress_callback("volume_analysis", "Calculating estimated tumor volume")
+
+        # Calculate tumor volume from the segmentation mask
+        volume_metrics: dict[str, float | int | list[float]] | None = None
+        try:
+            volume_metrics = calculate_tumor_volume(mask_path)
+            logger.info(
+                f"[{request_id}] Tumor volume calculated: "
+                f"{volume_metrics['tumor_volume_cm3']} cm³"
+            )
+        except (FileNotFoundError, ValueError) as e:
+            logger.warning(f"[{request_id}] Failed to calculate tumor volume: {str(e)}")
+
+        if progress_callback:
+            progress_callback(
+                "preparing_results",
+                "Preparing visualization and analysis results",
+            )
+
+        # Copy FLAIR file to prediction directory for NiiVue viewer
+        # This must happen BEFORE cleanup_upload_session deletes the upload session
+        flair_copy_path = prediction_dir / "BraTS-Patient_flair.nii.gz"
+        shutil.copy2(modality_paths.flair, flair_copy_path)
+        logger.info(f"[{request_id}] Copied FLAIR to: {flair_copy_path.as_posix()}")
+
+        # Normalize paths for stable API responses
+        result["mask_path"] = mask_path.as_posix()
+        result["mri_path"] = flair_copy_path.as_posix()
+        if result.get("probability_path"):
+            result["probability_path"] = Path(result["probability_path"]).as_posix()
+
+        # Add tumor volume to API response (None when calculation failed, 0.0 when no tumor)
+        if volume_metrics is not None:
+            result["tumor_volume_cm3"] = volume_metrics["tumor_volume_cm3"]
+        else:
+            result["tumor_volume_cm3"] = None
+
+        metadata: dict[str, str | float | int | list[float] | None] = {
+            "case_id": result.get("case_id"),
+            "mask_path": result["mask_path"],
+            "mri_path": result["mri_path"],
+            "probability_path": result.get("probability_path"),
+            "request_id": request_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "tumor_volume_cm3": result["tumor_volume_cm3"],
+        }
+        if volume_metrics is not None:
+            metadata["tumor_volume_mm3"] = volume_metrics["tumor_volume_mm3"]
+            metadata["tumor_voxel_count"] = volume_metrics["tumor_voxel_count"]
+            metadata["voxel_spacing_mm"] = volume_metrics["voxel_spacing_mm"]
+            metadata["voxel_volume_mm3"] = volume_metrics["voxel_volume_mm3"]
+
+        with (prediction_dir / "metadata.json").open("w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
+
+        logger.info(f"[{request_id}] END upload inference service completed successfully")
+        return result
+
+    except (ValidationError, CheckpointError, InferenceError) as e:
+        logger.error(f"[{request_id}] Request failed: {str(e)}", exc_info=True)
+        raise  # Re-raise domain-specific exceptions
+
+    except Exception as e:
+        logger.error(f"[{request_id}] Upload inference failed: {str(e)}", exc_info=True)
+        raise InferenceError(
+            f"Inference failed: {str(e)}",
+            client_message="Inference execution failed",
+        ) from e
+
+    finally:
+        # Delete temporary uploads only — never delete outputs/predictions/
+        if session_created_here and upload_session is not None:
+            cleanup_upload_session(upload_session)
+            logger.info(f"[{request_id}] Temporary upload session cleaned.")
+
+
 def predict_case_upload_service(
     flair,
     t1,
@@ -109,149 +296,120 @@ def predict_case_upload_service(
         InferenceError: If inference fails for any reason
     """
     request_id = str(uuid.uuid4())[:8]
-    upload_session = None
-    
+    return _execute_upload_prediction(
+        flair=flair,
+        t1=t1,
+        t1ce=t1ce,
+        t2=t2,
+        checkpoint_path=checkpoint_path,
+        save_probabilities=save_probabilities,
+        request_id=request_id,
+    )
+
+
+def _run_prediction_job(
+    job_id: str,
+    upload_session: Path,
+    modality_paths: ModalityPaths,
+    checkpoint_path: str | Path,
+    save_probabilities: bool,
+) -> None:
+    """Background worker that runs the full prediction pipeline for a job."""
+
+    def progress_callback(stage: str, message: str) -> None:
+        update_job(job_id, stage=stage, message=message)
+
+    request_id = job_id[:8]
+
     try:
-        logger.info(f"[{request_id}] START upload inference service")
-        
-        # Validate checkpoint exists
-        checkpoint_path_obj = Path(checkpoint_path)
-        if not checkpoint_path_obj.exists():
-            raise CheckpointError(
-                f"Checkpoint file does not exist: {checkpoint_path_obj}",
-                client_message="Checkpoint file not found",
-            )
-
-        # Validate uploaded files (extension and size only)
-        UploadValidator.validate_upload(t1, MODALITY_T1)
-        UploadValidator.validate_upload(t1ce, MODALITY_T1CE)
-        UploadValidator.validate_upload(t2, MODALITY_T2)
-        UploadValidator.validate_upload(flair, MODALITY_FLAIR)
-        
-        # Check for duplicate uploads
-        UploadValidator.validate_no_duplicate_uploads({
-            MODALITY_T1: t1,
-            MODALITY_T1CE: t1ce,
-            MODALITY_T2: t2,
-            MODALITY_FLAIR: flair,
-        })
-        
-        logger.info(f"[{request_id}] VALIDATION completed")
-
-        # Create upload session
-        upload_session = create_upload_session()
-        logger.info(f"[{request_id}] Created upload session: {upload_session}")
-
-        # Create patient folder inside upload session
-        patient_folder = upload_session / "BraTS-Patient"
-        patient_folder.mkdir(parents=True, exist_ok=True)
-
-        # Save uploaded files with standardized filenames
-        modality_paths = save_modalities(t1, t1ce, t2, flair, patient_folder)
-        logger.info(f"[{request_id}] Saved modalities to: {patient_folder}")
-
-        # Validate NIfTI format and shapes
-        UploadValidator.validate_nifti_file(modality_paths.t1)
-        UploadValidator.validate_nifti_file(modality_paths.t1ce)
-        UploadValidator.validate_nifti_file(modality_paths.t2)
-        UploadValidator.validate_nifti_file(modality_paths.flair)
-        
-        UploadValidator.validate_modality_shapes({
-            MODALITY_T1: modality_paths.t1,
-            MODALITY_T1CE: modality_paths.t1ce,
-            MODALITY_T2: modality_paths.t2,
-            MODALITY_FLAIR: modality_paths.flair,
-        })
-        logger.info(f"[{request_id}] NIfTI validation completed")
-
-        # Permanent prediction directory (survives upload cleanup)
-        prediction_dir = create_prediction_dir()
-        expected_mask = prediction_dir / "BraTS-Patient_pred.nii.gz"
-        logger.info(f"[{request_id}] Saving prediction to: {expected_mask.as_posix()}")
-
-        # Call inference with explicit paths (no filename discovery)
-        result = predict_case_explicit(
-            t1_path=modality_paths.t1,
-            t1ce_path=modality_paths.t1ce,
-            t2_path=modality_paths.t2,
-            flair_path=modality_paths.flair,
+        result = _execute_upload_prediction(
+            flair=None,
+            t1=None,
+            t1ce=None,
+            t2=None,
             checkpoint_path=checkpoint_path,
-            out_dir=prediction_dir,
-            save_probs=save_probabilities,
+            save_probabilities=save_probabilities,
+            upload_session=upload_session,
+            modality_paths=modality_paths,
+            progress_callback=progress_callback,
             request_id=request_id,
         )
-
-        mask_path = Path(result["mask_path"])
-        if not mask_path.exists():
-            raise InferenceError(
-                "Prediction file was not created",
-                client_message="Inference completed but output file was not generated",
-            )
-
-        logger.info(f"[{request_id}] Prediction verified successfully.")
-
-        # Calculate tumor volume from the segmentation mask
-        try:
-            volume_metrics = calculate_tumor_volume(mask_path)
-            logger.info(f"[{request_id}] Tumor volume calculated: {volume_metrics['tumor_volume_cm3']} cm³")
-        except (FileNotFoundError, ValueError) as e:
-            logger.warning(f"[{request_id}] Failed to calculate tumor volume: {str(e)}")
-            # Set default values if calculation fails
-            volume_metrics = {
-                "tumor_voxel_count": 0,
-                "voxel_spacing_mm": [0.0, 0.0, 0.0],
-                "voxel_volume_mm3": 0.0,
-                "tumor_volume_mm3": 0.0,
-                "tumor_volume_cm3": 0.0,
-            }
-
-        # Copy FLAIR file to prediction directory for NiiVue viewer
-        # This must happen BEFORE cleanup_upload_session deletes the upload session
-        flair_copy_path = prediction_dir / "BraTS-Patient_flair.nii.gz"
-        shutil.copy2(modality_paths.flair, flair_copy_path)
-        logger.info(f"[{request_id}] Copied FLAIR to: {flair_copy_path.as_posix()}")
-
-        # Normalize paths for stable API responses
-        result["mask_path"] = mask_path.as_posix()
-        result["mri_path"] = flair_copy_path.as_posix()
-        if result.get("probability_path"):
-            result["probability_path"] = Path(result["probability_path"]).as_posix()
-        
-        # Add tumor volume to API response
-        result["tumor_volume_cm3"] = volume_metrics["tumor_volume_cm3"]
-
-        metadata = {
-            "case_id": result.get("case_id"),
-            "mask_path": result["mask_path"],
-            "mri_path": result["mri_path"],
-            "probability_path": result.get("probability_path"),
-            "request_id": request_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "tumor_volume_cm3": volume_metrics["tumor_volume_cm3"],
-            "tumor_volume_mm3": volume_metrics["tumor_volume_mm3"],
-            "tumor_voxel_count": volume_metrics["tumor_voxel_count"],
-            "voxel_spacing_mm": volume_metrics["voxel_spacing_mm"],
-            "voxel_volume_mm3": volume_metrics["voxel_volume_mm3"],
-        }
-        with (prediction_dir / "metadata.json").open("w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=2)
-
-        logger.info(f"[{request_id}] END upload inference service completed successfully")
-        return result
-
-    except (ValidationError, CheckpointError, InferenceError) as e:
-        logger.error(f"[{request_id}] Request failed: {str(e)}", exc_info=True)
-        raise  # Re-raise domain-specific exceptions
-
+        complete_job(job_id, result)
+    except ValidationError as e:
+        fail_job(job_id, e.client_message)
+    except CheckpointError as e:
+        fail_job(job_id, e.client_message)
+    except InferenceError as e:
+        fail_job(job_id, e.client_message)
     except Exception as e:
-        logger.error(f"[{request_id}] Upload inference failed: {str(e)}", exc_info=True)
-        raise InferenceError(
-            f"Inference failed: {str(e)}",
-            client_message="Inference execution failed",
-        ) from e
-
+        logger.error(f"[{request_id}] Background job failed: {str(e)}", exc_info=True)
+        fail_job(job_id, "Inference execution failed")
     finally:
-        # Delete temporary uploads only — never delete outputs/predictions/
-        if upload_session is not None:
-            cleanup_upload_session(upload_session)
-            logger.info(f"[{request_id}] Temporary upload session cleaned.")
+        cleanup_upload_session(upload_session)
+        logger.info(f"[{request_id}] Temporary upload session cleaned (background job).")
+
+
+def start_prediction_job(
+    flair,
+    t1,
+    t1ce,
+    t2,
+    checkpoint_path: str | Path,
+    save_probabilities: bool = False,
+) -> dict[str, str]:
+    """Accept uploads, persist files, create a job, and start background inference.
+
+    Uploaded files are saved to disk before returning so they remain available
+    after the HTTP request completes and UploadFile handles are closed.
+
+    Returns:
+        Dictionary with job_id and status for immediate client polling.
+    """
+    # Validate checkpoint exists before accepting the job
+    checkpoint_path_obj = Path(checkpoint_path)
+    if not checkpoint_path_obj.exists():
+        raise CheckpointError(
+            f"Checkpoint file does not exist: {checkpoint_path_obj}",
+            client_message="Checkpoint file not found",
+        )
+
+    # Basic upload validation (extension, size, duplicates)
+    UploadValidator.validate_upload(t1, MODALITY_T1)
+    UploadValidator.validate_upload(t1ce, MODALITY_T1CE)
+    UploadValidator.validate_upload(t2, MODALITY_T2)
+    UploadValidator.validate_upload(flair, MODALITY_FLAIR)
+    UploadValidator.validate_no_duplicate_uploads({
+        MODALITY_T1: t1,
+        MODALITY_T1CE: t1ce,
+        MODALITY_T2: t2,
+        MODALITY_FLAIR: flair,
+    })
+
+    # Persist uploaded files before the request returns
+    upload_session = create_upload_session()
+    patient_folder = upload_session / "BraTS-Patient"
+    patient_folder.mkdir(parents=True, exist_ok=True)
+    modality_paths = save_modalities(t1, t1ce, t2, flair, patient_folder)
+
+    job_id = create_job()
+
+    thread = threading.Thread(
+        target=_run_prediction_job,
+        args=(
+            job_id,
+            upload_session,
+            modality_paths,
+            checkpoint_path,
+            save_probabilities,
+        ),
+        daemon=True,
+        name=f"prediction-job-{job_id[:8]}",
+    )
+    thread.start()
+
+    logger.info(f"[{job_id[:8]}] Prediction job started: {job_id}")
+
+    return {
+        "job_id": job_id,
+        "status": "processing",
+    }

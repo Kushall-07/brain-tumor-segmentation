@@ -10,14 +10,31 @@ export default function Results() {
   const location = useLocation();
   const predictionState = location.state;
   const [isDownloading, setIsDownloading] = useState(false);
+  const [result, setResult] = useState(null);
 
   useEffect(() => {
-    if (!predictionState?.result) {
+    // First, try to get result from navigation state
+    let predictionResult = predictionState?.result;
+
+    // If not available, try to restore from sessionStorage
+    if (!predictionResult) {
+      try {
+        const storedPrediction = sessionStorage.getItem('brainTumorLatestPrediction');
+        if (storedPrediction) {
+          predictionResult = JSON.parse(storedPrediction);
+        }
+      } catch (error) {
+        console.error('Failed to parse stored prediction from sessionStorage:', error);
+      }
+    }
+
+    if (!predictionResult) {
       toast.error('No prediction data found', {
         position: 'top-center',
       });
       navigate('/predict', { replace: true });
     } else {
+      setResult(predictionResult);
       toast.success('Prediction completed successfully!', {
         position: 'top-center',
         duration: 4000,
@@ -25,11 +42,9 @@ export default function Results() {
     }
   }, [navigate, predictionState]);
 
-  if (!predictionState?.result) {
+  if (!result) {
     return null;
   }
-
-  const { result } = predictionState;
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -170,13 +185,8 @@ export default function Results() {
           </div>
         </div>
 
-        {/* MRI Visualization Card */}
-        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
-            <FileText className="mr-2 text-indigo-600" size={24} />
-            MRI Visualization
-          </h2>
-
+        {/* MRI Visualization Workstation */}
+        <div className="mb-6 overflow-hidden rounded-xl shadow-lg">
           <NiiVueViewer
             mriPath={result.mri_path}
             maskPath={result.mask_path}
