@@ -4,7 +4,10 @@ import shutil
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Union, Tuple
+
+import nibabel as nib
+import numpy as np
 
 from fastapi import UploadFile
 
@@ -142,3 +145,58 @@ def save_modalities(
     )
 
 
+def calculate_tumor_volume(mask_path: Union[str, Path]) -> dict[str, float | int | list[float]]:
+    """Calculate tumor volume from a segmentation mask NIfTI file.
+
+    Args:
+        mask_path: Path to the predicted segmentation mask (.nii.gz)
+
+    Returns:
+        Dictionary containing:
+            - tumor_voxel_count: Number of non-zero voxels
+            - voxel_spacing_mm: Voxel spacing [sx, sy, sz] in mm
+            - voxel_volume_mm3: Physical volume of one voxel in mm³
+            - tumor_volume_mm3: Total tumor volume in mm³
+            - tumor_volume_cm3: Total tumor volume in cm³
+
+    Raises:
+        FileNotFoundError: If mask file does not exist
+        ValueError: If NIfTI file is invalid or voxel spacing cannot be read
+    """
+    mask_path_obj = Path(mask_path)
+    
+    if not mask_path_obj.exists():
+        raise FileNotFoundError(f"Mask file does not exist: {mask_path_obj}")
+    
+    try:
+        # Load the NIfTI mask
+        mask_img = nib.load(mask_path_obj)
+        mask_data = mask_img.get_fdata()
+        
+        # Get voxel spacing from header
+        zooms = mask_img.header.get_zooms()
+        if len(zooms) < 3:
+            raise ValueError(f"Invalid voxel spacing in NIfTI header: {zooms}")
+        
+        voxel_spacing_mm = [float(zooms[0]), float(zooms[1]), float(zooms[2])]
+        
+        # Calculate physical volume of one voxel
+        voxel_volume_mm3 = voxel_spacing_mm[0] * voxel_spacing_mm[1] * voxel_spacing_mm[2]
+        
+        # Count tumor voxels (all non-zero labels)
+        tumor_voxel_count = int(np.count_nonzero(mask_data > 0))
+        
+        # Calculate tumor volume
+        tumor_volume_mm3 = tumor_voxel_count * voxel_volume_mm3
+        tumor_volume_cm3 = round(tumor_volume_mm3 / 1000.0, 2)
+        
+        return {
+            "tumor_voxel_count": tumor_voxel_count,
+            "voxel_spacing_mm": voxel_spacing_mm,
+            "voxel_volume_mm3": round(voxel_volume_mm3, 6),
+            "tumor_volume_mm3": round(tumor_volume_mm3, 2),
+            "tumor_volume_cm3": tumor_volume_cm3,
+        }
+        
+    except Exception as e:
+        raise ValueError(f"Failed to calculate tumor volume from {mask_path_obj}: {str(e)}") from e

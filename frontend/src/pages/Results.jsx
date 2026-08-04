@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { CheckCircle, Download, ArrowLeft, FileText, AlertCircle } from 'lucide-react';
+import { CheckCircle, Download, ArrowLeft, FileText, AlertCircle, Activity } from 'lucide-react';
 import predictionService from '../services/predictionService';
 import NiiVueViewer from '../components/NiiVueViewer';
 
@@ -145,6 +145,28 @@ export default function Results() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Tumor Analysis Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center">
+            <Activity className="mr-2 text-indigo-600" size={24} />
+            Tumor Analysis
+          </h2>
+
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-100">
+            <p className="text-sm font-medium text-gray-600 mb-2">Estimated Tumor Volume</p>
+            {result.tumor_volume_cm3 !== null && result.tumor_volume_cm3 !== undefined ? (
+              <p className="text-4xl font-bold text-gray-900 mb-2">
+                {parseFloat(result.tumor_volume_cm3).toFixed(2)} cm<sup>3</sup>
+              </p>
+            ) : (
+              <p className="text-4xl font-bold text-gray-400 mb-2">Not available</p>
+            )}
+            <p className="text-sm text-gray-500">
+              Calculated from the AI-generated segmentation mask
+            </p>
           </div>
         </div>
 

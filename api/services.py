@@ -14,6 +14,7 @@ from api.utils import (
     create_prediction_dir,
     create_upload_session,
     save_modalities,
+    calculate_tumor_volume,
 )
 from api.validators import UploadValidator
 from inference.predict import predict_case, predict_case_explicit
@@ -189,6 +190,21 @@ def predict_case_upload_service(
 
         logger.info(f"[{request_id}] Prediction verified successfully.")
 
+        # Calculate tumor volume from the segmentation mask
+        try:
+            volume_metrics = calculate_tumor_volume(mask_path)
+            logger.info(f"[{request_id}] Tumor volume calculated: {volume_metrics['tumor_volume_cm3']} cm³")
+        except (FileNotFoundError, ValueError) as e:
+            logger.warning(f"[{request_id}] Failed to calculate tumor volume: {str(e)}")
+            # Set default values if calculation fails
+            volume_metrics = {
+                "tumor_voxel_count": 0,
+                "voxel_spacing_mm": [0.0, 0.0, 0.0],
+                "voxel_volume_mm3": 0.0,
+                "tumor_volume_mm3": 0.0,
+                "tumor_volume_cm3": 0.0,
+            }
+
         # Copy FLAIR file to prediction directory for NiiVue viewer
         # This must happen BEFORE cleanup_upload_session deletes the upload session
         flair_copy_path = prediction_dir / "BraTS-Patient_flair.nii.gz"
@@ -200,6 +216,9 @@ def predict_case_upload_service(
         result["mri_path"] = flair_copy_path.as_posix()
         if result.get("probability_path"):
             result["probability_path"] = Path(result["probability_path"]).as_posix()
+        
+        # Add tumor volume to API response
+        result["tumor_volume_cm3"] = volume_metrics["tumor_volume_cm3"]
 
         metadata = {
             "case_id": result.get("case_id"),
@@ -208,6 +227,11 @@ def predict_case_upload_service(
             "probability_path": result.get("probability_path"),
             "request_id": request_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
+            "tumor_volume_cm3": volume_metrics["tumor_volume_cm3"],
+            "tumor_volume_mm3": volume_metrics["tumor_volume_mm3"],
+            "tumor_voxel_count": volume_metrics["tumor_voxel_count"],
+            "voxel_spacing_mm": volume_metrics["voxel_spacing_mm"],
+            "voxel_volume_mm3": volume_metrics["voxel_volume_mm3"],
         }
         with (prediction_dir / "metadata.json").open("w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
