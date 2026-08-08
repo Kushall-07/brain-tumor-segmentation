@@ -134,7 +134,7 @@ def main() -> None:
     from configs.config import Config
 
     cfg = Config()
-    model = build_model(
+    model, _report = build_model(
         cfg.model_name,
         in_channels=cfg.input_channels,
         out_channels=cfg.num_classes,
@@ -143,7 +143,8 @@ def main() -> None:
         residual_features=cfg.residual_unet_features,
         swin_feature_size=cfg.swin_feature_size,
         swin_use_checkpoint=cfg.swin_use_checkpoint,
-    ).to(device)
+    )
+    model = model.to(device)
 
     _load_checkpoint(model=model, checkpoint_path=checkpoint_path, device=device)
     model.eval()

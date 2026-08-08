@@ -125,9 +125,8 @@ def save_axial_comparison(
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap
 
-    # Discrete colors: background transparent via alpha in overlay; set visible colors for classes.
-    # (works well for BraTS-style labels 0..3, but also OK if other labels exist)
-    cmap = ListedColormap(["black", "#e41a1c", "#4daf4a", "#377eb8", "#984ea3", "#ff7f00"])
+    # Discrete colors for BraTS 4-class: 0 bg, 1 NCR/NET red, 2 edema green, 3 ET gold
+    cmap = ListedColormap(["black", "#e41a1c", "#4daf4a", "#ffd700"])
 
     n = len(slice_idxs)
     cols = max(1, int(spec.cols))

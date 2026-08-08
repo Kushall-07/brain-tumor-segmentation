@@ -1,3 +1,5 @@
+"""Checkpoint save/resume with EMA + region best scores."""
+
 from __future__ import annotations
 
 import json
@@ -7,6 +9,8 @@ from typing import Any, Mapping, Optional
 import torch
 import torch.nn as nn
 
+from utils.ema import ModelEMA
+
 
 INCOMPATIBLE_3CLASS_MSG = (
     "Old 3-class checkpoints are incompatible with 4-class model. "
@@ -15,21 +19,18 @@ INCOMPATIBLE_3CLASS_MSG = (
 
 
 def _infer_out_channels(state_dict: Mapping[str, Any]) -> Optional[int]:
-    for key in ("out.conv.weight", "out.conv.bias", "output_block.conv.conv.weight"):
+    for key in ("out.conv.conv.weight", "out.conv.weight", "out.conv.bias", "output_block.conv.conv.weight"):
         if key in state_dict:
             w = state_dict[key]
             if hasattr(w, "shape") and len(w.shape) >= 1:
                 return int(w.shape[0])
     for key, tensor in state_dict.items():
-        if key.endswith("out.conv.weight") and hasattr(tensor, "shape"):
+        if ("out.conv" in key) and key.endswith("weight") and hasattr(tensor, "shape"):
             return int(tensor.shape[0])
     return None
 
 
-def validate_checkpoint_classes(
-    checkpoint_path: Path,
-    expected_classes: int,
-) -> None:
+def validate_checkpoint_classes(checkpoint_path: Path, expected_classes: int) -> None:
     """Raise if checkpoint output head does not match expected class count."""
     ckpt = torch.load(str(checkpoint_path), map_location="cpu")
     state = ckpt["model_state_dict"] if isinstance(ckpt, dict) and "model_state_dict" in ckpt else ckpt
@@ -56,7 +57,9 @@ def save_checkpoint(
     scaler: Optional[torch.cuda.amp.GradScaler],
     scheduler: Optional[torch.optim.lr_scheduler.LRScheduler],
     best_scores: Mapping[str, float],
+    ema: Optional[ModelEMA] = None,
     metadata: Optional[Mapping[str, Any]] = None,
+    config_snapshot: Optional[Mapping[str, Any]] = None,
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload: dict[str, Any] = {
@@ -72,6 +75,10 @@ def save_checkpoint(
             payload["scheduler_state_dict"] = scheduler.state_dict()
         except Exception:
             pass
+    if ema is not None:
+        payload["ema_state_dict"] = ema.state_dict()
+    if config_snapshot is not None:
+        payload["config"] = dict(config_snapshot)
 
     torch.save(payload, str(path))
 
@@ -89,6 +96,7 @@ def try_resume(
     scaler: torch.cuda.amp.GradScaler,
     scheduler: Optional[torch.optim.lr_scheduler.LRScheduler],
     expected_classes: int,
+    ema: Optional[ModelEMA] = None,
 ) -> tuple[int, dict[str, float]]:
     """
     Resume from last.pt if present.
@@ -96,8 +104,14 @@ def try_resume(
     Returns:
         (start_epoch, best_scores)
     """
+    default_best = {
+        "mean_dice": float("-inf"),
+        "wt_dice": float("-inf"),
+        "tc_dice": float("-inf"),
+        "et_dice": float("-inf"),
+    }
     if not last_path.exists():
-        return 1, {"mean_dice": float("-inf"), "wt_dice": float("-inf"), "tc_dice": float("-inf"), "et_dice": float("-inf")}
+        return 1, default_best
 
     validate_checkpoint_classes(last_path, expected_classes)
     ckpt = torch.load(str(last_path), map_location="cpu")
@@ -109,8 +123,14 @@ def try_resume(
         scaler.load_state_dict(ckpt["scaler_state_dict"])
     if scheduler is not None and "scheduler_state_dict" in ckpt:
         scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+    if ema is not None and "ema_state_dict" in ckpt:
+        ema.load_state_dict(ckpt["ema_state_dict"])
+        print("EMA state restored from checkpoint")
+    elif ema is not None:
+        print("WARNING: resume checkpoint has no EMA state; continuing with freshly initialized EMA")
 
     epoch = int(ckpt.get("epoch", 0))
-    best_scores = dict(ckpt.get("best_scores", {}))
+    best_scores = dict(default_best)
+    best_scores.update({str(k): float(v) for k, v in dict(ckpt.get("best_scores", {})).items()})
     print(f"Resuming from epoch {epoch}")
     return epoch + 1, best_scores

@@ -3,6 +3,9 @@ data/
 *.nii
 *.nii.gz
 
+# Pretrained weights (large)
+pretrained/
+
 # Outputs
 outputs/
 models/checkpoints/

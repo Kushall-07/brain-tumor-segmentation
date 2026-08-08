@@ -22,16 +22,25 @@ def tta_sliding_window_inference(
     sw_batch_size: int = 1,
     use_amp: bool = True,
     device: torch.device | None = None,
+    accumulate_on_cpu: bool = True,
 ) -> torch.Tensor:
     """
-    8-fold flip TTA (x/y/z flips) with softmax probability averaging.
+    8-fold flip TTA (identity, x, y, z, xy, xz, yz, xyz) with softmax averaging.
 
-    Returns averaged probabilities [B, C, D, H, W].
+    Processes ONE augmentation at a time. Softmax accumulation defaults to CPU
+    so all 8 full-volume GPU predictions are never retained simultaneously.
+
+    Returns averaged probabilities [B, C, D, H, W] on the same device as `inputs`
+    (moved back from CPU if accumulate_on_cpu=True).
+
+    NOTE: TTA is for final inference/evaluation only — not training validation.
     """
     if device is None:
         device = inputs.device
 
-    # Spatial dims for [B, C, D, H, W]
+    # Force memory-safe sliding-window batching
+    sw_batch_size = 1
+
     spatial_axes = (2, 3, 4)
     flip_combos: Iterable[tuple[int, ...]] = [()] + [
         (a,) for a in spatial_axes
@@ -45,10 +54,10 @@ def tta_sliding_window_inference(
     n = 0
 
     model.eval()
-    with torch.no_grad():
+    with torch.inference_mode():
         for dims in flip_combos:
             x_aug = _flip_spatial_dims(inputs, dims)
-            with torch.autocast(device_type=device.type, enabled=use_amp and device.type == "cuda"):
+            with torch.amp.autocast("cuda", enabled=use_amp and device.type == "cuda"):
                 logits = sliding_window_inference(
                     inputs=x_aug,
                     roi_size=tuple(int(v) for v in roi_size),
@@ -57,9 +66,24 @@ def tta_sliding_window_inference(
                     overlap=float(overlap),
                 )
             logits = _flip_spatial_dims(logits, dims)
-            probs = torch.softmax(logits, dim=1)
-            probs_sum = probs if probs_sum is None else probs_sum + probs
+            probs = torch.softmax(logits.float(), dim=1)
+
+            # Free GPU logits ASAP; accumulate on CPU when requested
+            del logits
+            if accumulate_on_cpu:
+                probs_cpu = probs.detach().cpu()
+                del probs
+                probs_sum = probs_cpu if probs_sum is None else probs_sum + probs_cpu
+                del probs_cpu
+            else:
+                probs_sum = probs if probs_sum is None else probs_sum + probs
+
             n += 1
+            if device.type == "cuda":
+                torch.cuda.empty_cache()  # only between TTA views (not every train iter)
 
     assert probs_sum is not None
-    return probs_sum / float(max(1, n))
+    avg = probs_sum / float(max(1, n))
+    if accumulate_on_cpu and avg.device.type == "cpu" and device.type == "cuda":
+        avg = avg.to(device)
+    return avg

@@ -37,7 +37,7 @@ def get_device() -> torch.device:
 def build_segmentation_model(
     device: Optional[torch.device] = None,
 ) -> nn.Module:
-    model = build_model(
+    model, _report = build_model(
         model_name=MODEL_NAME,
         in_channels=INPUT_CHANNELS,
         out_channels=NUM_CLASSES,
@@ -192,27 +192,94 @@ def run_sliding_window(
     device: torch.device,
     roi_size: tuple[int, int, int] = PATCH_SIZE,
     sw_batch_size: int = 1,
-    overlap: float = 0.25,
+    overlap: float = 0.5,
+    use_tta: bool | None = None,
+    use_cc_postprocess: bool | None = None,
+    cc_min_size: int | None = None,
 ) -> Tuple[np.ndarray, Optional[np.ndarray]]:
-    model.eval()
+    """Sliding-window inference with optional 8-flip TTA and CC post-processing.
 
+    Always returns raw-style mask path semantics: caller may save both raw and postprocessed.
+    This function returns the primary prediction (postprocessed if enabled) plus probs.
+    """
+    from configs.config import CC_MIN_SIZE, USE_CC_POSTPROCESS, USE_TTA, VAL_OVERLAP
+    from utils.inference_utils import tta_sliding_window_inference
+    from utils.postprocess import maybe_postprocess
+
+    if use_tta is None:
+        use_tta = bool(USE_TTA)
+    if use_cc_postprocess is None:
+        use_cc_postprocess = bool(USE_CC_POSTPROCESS)
+    if cc_min_size is None:
+        cc_min_size = int(CC_MIN_SIZE)
+    overlap = float(VAL_OVERLAP if overlap is None else overlap)
+
+    model.eval()
     x = image.unsqueeze(0).to(device)  # [1, 4, D, H, W]
 
     with torch.no_grad():
-        logits = sliding_window_inference(
-            inputs=x,
-            roi_size=tuple(int(v) for v in roi_size),
-            sw_batch_size=int(sw_batch_size),
-            predictor=model,
-            overlap=float(overlap),
-        )
+        if use_tta:
+            probs = tta_sliding_window_inference(
+                model,
+                x,
+                roi_size=tuple(int(v) for v in roi_size),
+                overlap=float(overlap),
+                sw_batch_size=int(sw_batch_size),
+                use_amp=True,
+                device=device,
+            )
+        else:
+            logits = sliding_window_inference(
+                inputs=x,
+                roi_size=tuple(int(v) for v in roi_size),
+                sw_batch_size=int(sw_batch_size),
+                predictor=model,
+                overlap=float(overlap),
+            )
+            probs = torch.softmax(logits, dim=1)
 
-        probs = torch.softmax(logits, dim=1)  # [1, C, D, H, W]
         pred = torch.argmax(probs, dim=1)  # [1, D, H, W]
 
     pred_np = pred.squeeze(0).detach().cpu().numpy().astype(np.uint8, copy=False)
     probs_np = probs.squeeze(0).detach().cpu().numpy().astype(np.float32, copy=False)
-    return pred_np, probs_np
+
+    raw_pred = pred_np
+    if use_cc_postprocess:
+        from utils.postprocess import maybe_postprocess
+
+        post_pred, _stats = maybe_postprocess(
+            raw_pred, enabled=True, min_size=int(cc_min_size)
+        )
+        return post_pred, probs_np
+
+    print("[postprocess] Connected-component post-processing applied: NO")
+    return raw_pred, probs_np
+
+
+def run_sliding_window_with_raw(
+    model: nn.Module,
+    image: torch.Tensor,
+    device: torch.device,
+    **kwargs,
+) -> tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
+    """Return (raw_pred, postprocessed_or_raw, probs). Raw is never altered in-place by postprocess."""
+    from configs.config import CC_MIN_SIZE, USE_CC_POSTPROCESS, USE_TTA
+
+    # Force postprocess off to get raw via internal path, then apply optionally
+    raw, probs = run_sliding_window(
+        model,
+        image,
+        device,
+        use_tta=kwargs.get("use_tta", USE_TTA),
+        use_cc_postprocess=False,
+        overlap=kwargs.get("overlap", 0.5),
+        roi_size=kwargs.get("roi_size", PATCH_SIZE),
+    )
+    from utils.postprocess import maybe_postprocess
+
+    enabled = bool(kwargs.get("use_cc_postprocess", USE_CC_POSTPROCESS))
+    post, _ = maybe_postprocess(raw, enabled=enabled, min_size=int(kwargs.get("cc_min_size", CC_MIN_SIZE)))
+    return raw, post, probs
 
 
 def save_nifti_mask(

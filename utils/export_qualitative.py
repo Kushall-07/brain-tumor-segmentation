@@ -75,7 +75,7 @@ def main() -> None:
     from datasets.brats_dataset import BraTSDataset
 
     ds = BraTSDataset(root_dir=args.data_dir)
-    model = build_model(
+    model, _report = build_model(
         cfg.model_name,
         in_channels=cfg.input_channels,
         out_channels=cfg.num_classes,
@@ -84,7 +84,8 @@ def main() -> None:
         residual_features=cfg.residual_unet_features,
         swin_feature_size=cfg.swin_feature_size,
         swin_use_checkpoint=cfg.swin_use_checkpoint,
-    ).to(device)
+    )
+    model = model.to(device)
 
     state = torch.load(str(ckpt), map_location=device)
     model.load_state_dict(state["model_state_dict"] if "model_state_dict" in state else state)
