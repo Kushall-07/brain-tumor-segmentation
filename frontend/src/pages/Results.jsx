@@ -170,18 +170,56 @@ export default function Results() {
             Tumor Analysis
           </h2>
 
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-100">
-            <p className="text-sm font-medium text-gray-600 mb-2">Estimated Tumor Volume</p>
-            {result.tumor_volume_cm3 !== null && result.tumor_volume_cm3 !== undefined ? (
-              <p className="text-4xl font-bold text-gray-900 mb-2">
-                {parseFloat(result.tumor_volume_cm3).toFixed(2)} cm<sup>3</sup>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Tumor Volume */}
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-100 flex flex-col justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-2">Estimated Tumor Volume</p>
+                {result.tumor_volume_cm3 !== null && result.tumor_volume_cm3 !== undefined ? (
+                  <p className="text-4xl font-bold text-gray-900 mb-2">
+                    {parseFloat(result.tumor_volume_cm3).toFixed(2)} cm<sup>3</sup>
+                  </p>
+                ) : (
+                  <p className="text-4xl font-bold text-gray-400 mb-2">Not available</p>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                Calculated from the AI-generated segmentation mask
               </p>
-            ) : (
-              <p className="text-4xl font-bold text-gray-400 mb-2">Not available</p>
-            )}
-            <p className="text-sm text-gray-500">
-              Calculated from the AI-generated segmentation mask
-            </p>
+            </div>
+
+            {/* Automatic 3D Tumor Dimensions */}
+            <div className="bg-gradient-to-br from-teal-50 to-emerald-50 rounded-lg p-6 border border-teal-100 flex flex-col justify-between">
+              <div>
+                <p className="text-sm font-medium text-teal-800 mb-2">Automatic 3D Tumor Dimensions</p>
+                {result.tumor_dimensions_mm ? (
+                  <div>
+                    <p className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">
+                      {result.tumor_dimensions_mm.length} &times; {result.tumor_dimensions_mm.width} &times; {result.tumor_dimensions_mm.height} <span className="text-lg font-medium text-gray-600">mm</span>
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 text-xs border-t border-teal-200/60 pt-2 text-gray-600 font-medium">
+                      <div>
+                        <span className="text-gray-400 block text-[10px] uppercase tracking-wider">Length</span>
+                        <span className="text-sm font-semibold text-gray-800">{result.tumor_dimensions_mm.length} mm</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block text-[10px] uppercase tracking-wider">Width</span>
+                        <span className="text-sm font-semibold text-gray-800">{result.tumor_dimensions_mm.width} mm</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-400 block text-[10px] uppercase tracking-wider">Height</span>
+                        <span className="text-sm font-semibold text-gray-800">{result.tumor_dimensions_mm.height} mm</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-400 mb-2">Dimensions unavailable</p>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                Segmentation-derived principal axis physical measurements
+              </p>
+            </div>
           </div>
         </div>
 
@@ -190,6 +228,8 @@ export default function Results() {
           <NiiVueViewer
             mriPath={result.mri_path}
             maskPath={result.mask_path}
+            tumorDimensions={result.tumor_dimensions_mm}
+            tumorMeasurementGeometry={result.tumor_measurement_geometry}
           />
         </div>
 

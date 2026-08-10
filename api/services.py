@@ -18,6 +18,8 @@ from api.utils import (
     create_upload_session,
     save_modalities,
     calculate_tumor_volume,
+    calculate_tumor_dimensions,
+    calculate_tumor_dimensions_and_geometry,
 )
 from api.validators import UploadValidator
 from inference.predict import predict_case, predict_case_explicit
@@ -206,6 +208,21 @@ def _execute_upload_prediction(
         except (FileNotFoundError, ValueError) as e:
             logger.warning(f"[{request_id}] Failed to calculate tumor volume: {str(e)}")
 
+        # Calculate automatic 3D tumor dimensions and measurement geometry from the segmentation mask
+        tumor_dimensions: dict[str, float] | None = None
+        tumor_measurement_geometry: dict[str, dict[str, list[float] | float]] | None = None
+        try:
+            tumor_dimensions, tumor_measurement_geometry = calculate_tumor_dimensions_and_geometry(mask_path)
+            if tumor_dimensions:
+                logger.info(
+                    f"[{request_id}] Tumor dimensions calculated: "
+                    f"{tumor_dimensions['length']} x {tumor_dimensions['width']} x {tumor_dimensions['height']} mm"
+                )
+            else:
+                logger.info(f"[{request_id}] Tumor dimensions unavailable or no tumor detected.")
+        except Exception as e:
+            logger.warning(f"[{request_id}] Failed to calculate tumor dimensions/geometry: {str(e)}")
+
         if progress_callback:
             progress_callback(
                 "preparing_results",
@@ -230,7 +247,11 @@ def _execute_upload_prediction(
         else:
             result["tumor_volume_cm3"] = None
 
-        metadata: dict[str, str | float | int | list[float] | None] = {
+        # Add tumor dimensions and geometry to API response (None when calculation failed or no tumor)
+        result["tumor_dimensions_mm"] = tumor_dimensions
+        result["tumor_measurement_geometry"] = tumor_measurement_geometry
+
+        metadata: dict[str, str | float | int | list[float] | dict | None] = {
             "case_id": result.get("case_id"),
             "mask_path": result["mask_path"],
             "mri_path": result["mri_path"],
@@ -238,6 +259,8 @@ def _execute_upload_prediction(
             "request_id": request_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "tumor_volume_cm3": result["tumor_volume_cm3"],
+            "tumor_dimensions_mm": result["tumor_dimensions_mm"],
+            "tumor_measurement_geometry": result["tumor_measurement_geometry"],
         }
         if volume_metrics is not None:
             metadata["tumor_volume_mm3"] = volume_metrics["tumor_volume_mm3"]

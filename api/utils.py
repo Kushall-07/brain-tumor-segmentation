@@ -200,3 +200,151 @@ def calculate_tumor_volume(mask_path: Union[str, Path]) -> dict[str, float | int
         
     except Exception as e:
         raise ValueError(f"Failed to calculate tumor volume from {mask_path_obj}: {str(e)}") from e
+
+
+def compute_tumor_dimensions_and_geometry_from_data(
+    mask_data: np.ndarray, affine: np.ndarray
+) -> tuple[dict[str, float] | None, dict[str, dict[str, list[float] | float]] | None]:
+    """Calculate 3D tumor dimensions (length, width, height) and physical measurement geometry
+    (start_mm, end_mm, midpoint_mm for major axis length) using PCA and NIfTI affine matrix.
+
+    Args:
+        mask_data: 3D numpy array of predicted mask
+        affine: 4x4 NIfTI affine transformation matrix
+
+    Returns:
+        Tuple of (dimensions_dict, geometry_dict) or (None, None) if empty/invalid mask.
+    """
+    try:
+        tumor_mask = mask_data > 0
+        tumor_ijk = np.argwhere(tumor_mask)  # Shape (N, 3)
+
+        num_voxels = tumor_ijk.shape[0]
+        if num_voxels == 0:
+            return None, None
+
+        # 3x3 linear component of NIfTI affine matrix
+        M = affine[:3, :3]  # Columns a1, a2, a3 are physical voxel basis vectors
+        a1, a2, a3 = M[:, 0], M[:, 1], M[:, 2]
+
+        # Transform voxel indices to physical world mm coordinates
+        translation = affine[:3, 3]
+        P = tumor_ijk.astype(np.float64) @ M.T + translation  # Shape (N, 3)
+        centroid = np.mean(P, axis=0)
+
+        if num_voxels == 1:
+            basis_vectors = [a1, a2, a3]
+            axis_records = []
+            for vec in basis_vectors:
+                norm_v = float(np.linalg.norm(vec))
+                u = vec / norm_v if norm_v > 0 else np.array([1.0, 0.0, 0.0])
+                half_extent = norm_v / 2.0
+                s_mm = centroid - u * half_extent
+                e_mm = centroid + u * half_extent
+                m_mm = (s_mm + e_mm) / 2.0
+                axis_records.append({
+                    "physical_extent": norm_v,
+                    "value_mm": round(norm_v, 2),
+                    "start_mm": [round(float(x), 2) for x in s_mm],
+                    "end_mm": [round(float(x), 2) for x in e_mm],
+                    "midpoint_mm": [round(float(x), 2) for x in m_mm],
+                })
+        else:
+            Q = P - centroid
+            cov = np.cov(Q, rowvar=False)
+
+            # Numerically stable eigendecomposition for symmetric covariance matrix
+            eigenvalues, eigenvectors = np.linalg.eigh(cov)
+
+            sort_idx = np.argsort(eigenvalues)[::-1]
+            sorted_vectors = eigenvectors[:, sort_idx]
+
+            axis_records = []
+            for col in range(3):
+                u = sorted_vectors[:, col]
+                norm_u = np.linalg.norm(u)
+                if norm_u > 0:
+                    u = u / norm_u
+                else:
+                    u = np.array([1.0 if i == col else 0.0 for i in range(3)])
+
+                # Project centered physical coordinates onto principal axis u
+                projections = Q @ u
+                p_min = float(np.min(projections))
+                p_max = float(np.max(projections))
+                center_extent = p_max - p_min
+
+                # Finite physical voxel extent projected onto principal axis u
+                voxel_extent = float(
+                    abs(np.dot(u, a1)) + abs(np.dot(u, a2)) + abs(np.dot(u, a3))
+                )
+                half_voxel_extent = voxel_extent / 2.0
+
+                physical_extent = center_extent + voxel_extent
+
+                # Compute physical endpoints in mm (including boundary half-voxel extent)
+                start_mm = centroid + u * (p_min - half_voxel_extent)
+                end_mm = centroid + u * (p_max + half_voxel_extent)
+                midpoint_mm = (start_mm + end_mm) / 2.0
+
+                axis_records.append({
+                    "physical_extent": physical_extent,
+                    "value_mm": round(float(physical_extent), 2),
+                    "start_mm": [round(float(x), 2) for x in start_mm],
+                    "end_mm": [round(float(x), 2) for x in end_mm],
+                    "midpoint_mm": [round(float(x), 2) for x in midpoint_mm],
+                })
+
+        # Sort complete axis records by physical_extent descending
+        axis_records.sort(key=lambda r: r["physical_extent"], reverse=True)
+
+        dimensions = {
+            "length": axis_records[0]["value_mm"],
+            "width": axis_records[1]["value_mm"],
+            "height": axis_records[2]["value_mm"],
+        }
+
+        geometry = {
+            "length": {
+                "start_mm": axis_records[0]["start_mm"],
+                "end_mm": axis_records[0]["end_mm"],
+                "midpoint_mm": axis_records[0]["midpoint_mm"],
+                "value_mm": axis_records[0]["value_mm"],
+            }
+        }
+
+        return dimensions, geometry
+
+    except Exception:
+        return None, None
+
+
+def compute_tumor_dimensions_from_data(mask_data: np.ndarray, affine: np.ndarray) -> dict[str, float] | None:
+    """Calculate 3D tumor dimensions directly from mask array and 4x4 affine matrix using PCA."""
+    dims, _ = compute_tumor_dimensions_and_geometry_from_data(mask_data, affine)
+    return dims
+
+
+def calculate_tumor_dimensions_and_geometry(
+    mask_path: Union[str, Path]
+) -> tuple[dict[str, float] | None, dict[str, dict[str, list[float] | float]] | None]:
+    """Calculate 3D tumor dimensions and length measurement geometry from a NIfTI mask file."""
+    mask_path_obj = Path(mask_path)
+    if not mask_path_obj.exists():
+        return None, None
+
+    try:
+        mask_img = nib.load(mask_path_obj)
+        mask_data = mask_img.get_fdata()
+        affine = mask_img.affine
+        return compute_tumor_dimensions_and_geometry_from_data(mask_data, affine)
+    except Exception:
+        return None, None
+
+
+def calculate_tumor_dimensions(mask_path: Union[str, Path]) -> dict[str, float] | None:
+    """Calculate automatic 3D tumor dimensions (Length x Width x Height in mm)."""
+    dims, _ = calculate_tumor_dimensions_and_geometry(mask_path)
+    return dims
+
+
