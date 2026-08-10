@@ -46,20 +46,56 @@ def _zscore_normalize(vol: np.ndarray, eps: float = 1e-8) -> np.ndarray:
 
 
 def _remap_brats_labels(mask: np.ndarray) -> np.ndarray:
-    """Remap BraTS labels to consecutive integers.
+    """Remap BraTS-GLI labels to consecutive integers.
 
-    Mapping:
+    Mapping for BraTS-GLI dataset:
     - 0 -> 0 (background)
-    - 1 -> 1
-    - 2 -> 2
-    - 4 -> 3
-    """
+    - 1 -> 1 (NCR/NET)
+    - 2 -> 2 (edema)
+    - 3 -> 3 (enhancing tumor)
 
+    Raises:
+        ValueError: If unexpected labels are encountered (e.g., label 4 from classic BraTS).
+    """
     mask_i = mask.astype(np.int16, copy=False)
+    
+    # Validate input labels
+    unique_labels = set(np.unique(mask_i))
+    expected_labels = {0, 1, 2, 3}
+    unexpected_labels = unique_labels - expected_labels
+    
+    if unexpected_labels:
+        raise ValueError(
+            f"Unexpected BraTS label values detected: {sorted(unexpected_labels)}. "
+            f"Expected BraTS-GLI labels: {sorted(expected_labels)}. "
+            f"If using classic BraTS with label 4, update the remapping function."
+        )
+    
+    # Apply BraTS-GLI mapping (identity mapping for 0,1,2,3)
     out = np.zeros_like(mask_i, dtype=np.int16)
     out[mask_i == 1] = 1
     out[mask_i == 2] = 2
-    out[mask_i == 4] = 3
+    out[mask_i == 3] = 3
+    
+    # ET preservation validation
+    raw_et_voxels = np.sum(mask_i == 3)
+    mapped_et_voxels = np.sum(out == 3)
+    
+    if raw_et_voxels > 0 and mapped_et_voxels != raw_et_voxels:
+        raise ValueError(
+            f"ET LABEL LOSS DETECTED: raw ET voxels={raw_et_voxels}, "
+            f"mapped ET voxels={mapped_et_voxels}. "
+            f"Enhancing tumor (label 3) must be preserved."
+        )
+    
+    # Validate output contains only expected labels
+    output_labels = set(np.unique(out))
+    if output_labels - expected_labels:
+        raise ValueError(
+            f"Unexpected labels after remapping: {sorted(output_labels - expected_labels)}. "
+            f"Output should only contain: {sorted(expected_labels)}"
+        )
+    
     return out
 
 

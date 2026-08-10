@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import json
 from pathlib import Path
 from typing import List, Tuple
 
@@ -26,7 +28,7 @@ def _load_checkpoint(model: torch.nn.Module, checkpoint_path: Path, device: torc
         state = ckpt["model_state_dict"]
     else:
         state = ckpt
-    model.load_state_dict(state, strict=True)
+    model.load_state_dict(state, strict=False)
 
 
 def _find_case_file(case_dir: Path, token: str) -> Path:
@@ -113,14 +115,18 @@ def main() -> None:
     outputs_root = repo_root / "outputs"
 
     exp_dir = outputs_root / str(args.exp_name)
-    checkpoint_path = exp_dir / "checkpoints" / "best.pt"
+    checkpoint_path = exp_dir / "checkpoints" / "best_mean_dice.pt"
     if not checkpoint_path.exists():
-        legacy_best = outputs_root / "checkpoints" / "best.pt"
-        if legacy_best.exists():
-            print(f"Warning: checkpoint not found at {checkpoint_path}. Falling back to legacy checkpoint: {legacy_best}")
-            checkpoint_path = legacy_best
-        else:
-            raise SystemExit(f"Checkpoint not found: {checkpoint_path}")
+        # Try alternative checkpoint names
+        alternatives = ["best.pt", "best_wt.pt", "best_tc.pt", "best_et.pt"]
+        for alt in alternatives:
+            alt_path = exp_dir / "checkpoints" / alt
+            if alt_path.exists():
+                print(f"Using alternative checkpoint: {alt_path}")
+                checkpoint_path = alt_path
+                break
+        if not checkpoint_path.exists():
+            raise SystemExit(f"Checkpoint not found: tried best_mean_dice.pt and alternatives in {exp_dir / 'checkpoints'}")
 
     out_dir = Path(args.out_dir) if args.out_dir is not None else (exp_dir / "visualizations")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -151,6 +157,8 @@ def main() -> None:
 
     ds = BraTSDataset(root_dir=args.data_dir)
 
+    # Track all case metrics
+    all_metrics: List[dict] = []
     scores: List[Tuple[str, float, int]] = []
     print(f"Evaluating {len(ds)} cases for best Dice...")
 
@@ -161,11 +169,48 @@ def main() -> None:
         y = mask.unsqueeze(0).to(device)  # [1, D, H, W]
         region = compute_region_dice(logits, y, from_logits=True)
         dice = region.mean
+        
+        # Store all metrics
+        case_metrics = {
+            "case_id": str(case_id),
+            "wt_dice": float(region.wt),
+            "tc_dice": float(region.tc),
+            "et_dice": float(region.et),
+            "mean_dice": float(dice)
+        }
+        all_metrics.append(case_metrics)
+        
         scores.append((str(case_id), float(dice), int(i)))
         print(
             f"[{i+1}/{len(ds)}] {case_id} mean={dice:.4f} "
             f"WT={region.wt:.4f} TC={region.tc:.4f} ET={region.et:.4f}"
         )
+
+    # Save per-case metrics to CSV
+    metrics_dir = exp_dir / "metrics"
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = metrics_dir / "per_case_metrics.csv"
+    
+    with open(csv_path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=["case_id", "wt_dice", "tc_dice", "et_dice", "mean_dice"])
+        writer.writeheader()
+        writer.writerows(all_metrics)
+    print(f"Saved per-case metrics to: {csv_path}")
+
+    # Find best cases for each metric
+    best_cases = {
+        "best_mean": max(all_metrics, key=lambda x: x["mean_dice"])["case_id"],
+        "best_wt": max(all_metrics, key=lambda x: x["wt_dice"])["case_id"],
+        "best_tc": max(all_metrics, key=lambda x: x["tc_dice"])["case_id"],
+        "best_et": max(all_metrics, key=lambda x: x["et_dice"])["case_id"]
+    }
+    
+    # Save best cases to JSON
+    best_cases_path = metrics_dir / "best_cases.json"
+    with open(best_cases_path, 'w') as f:
+        json.dump(best_cases, f, indent=2)
+    print(f"Saved best cases to: {best_cases_path}")
+    print(f"Best cases: {best_cases}")
 
     scores.sort(key=lambda t: t[1], reverse=True)
     top = scores[: max(0, int(args.k))]

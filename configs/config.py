@@ -93,7 +93,7 @@ BATCH_SIZE: int = 1
 NUM_EPOCHS: int = 75
 LEARNING_RATE: float = 1e-4
 
-# 0=background, 1=NCR/NET, 2=edema, 3=enhancing tumor (ET; BraTS label 4 remapped)
+# 0=background, 1=NCR/NET, 2=edema, 3=enhancing tumor (ET; BraTS-GLI label 3)
 NUM_CLASSES: int = 4
 CE_CLASS_WEIGHTS: tuple[float, ...] = (0.1, 1.0, 2.0, 4.0)
 
@@ -146,7 +146,7 @@ LABEL_SMOOTHING: float = 0.0
 # Experiment output directories
 # -------------------------------
 
-EXP_NAME: str = "exp_swinunetr_4class_final"
+EXP_NAME: str = "exp_swinunetr_4class_et_fixed"
 OUTPUT_DIR: Path = PROJECT_ROOT / "outputs"
 EXP_DIR: Path = OUTPUT_DIR / EXP_NAME
 CHECKPOINT_DIR: Path = EXP_DIR / "checkpoints"
