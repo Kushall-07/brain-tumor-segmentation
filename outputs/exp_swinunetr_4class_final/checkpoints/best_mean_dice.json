@@ -1,0 +1,47 @@
+{
+  "architecture_type": "SwinUNETR",
+  "best_scores": {
+    "et_dice": 1.0,
+    "mean_dice": 0.7931873513851315,
+    "tc_dice": 0.6870463188271969,
+    "wt_dice": 0.711194121837616
+  },
+  "checkpoint": "best_mean_dice",
+  "ema": {
+    "decay": 0.999,
+    "device": "cpu",
+    "enabled": true
+  },
+  "ema_device": "cpu",
+  "ema_enabled": true,
+  "epoch": 64,
+  "et_dice": 1.0,
+  "exp_name": "exp_swinunetr_4class_final",
+  "learning_rate": 6.388372147967014e-05,
+  "loss": {
+    "ce_class_weights": [
+      0.1,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "focal_gamma": 2.0,
+    "type": "DiceCrossEntropyLoss",
+    "use_focal_loss": false
+  },
+  "mean_dice": 0.7931873513851315,
+  "model": {
+    "deep_supervision": "NOT IMPLEMENTED / FUTURE EXPERIMENT",
+    "model_name": "swinunetr",
+    "swin_feature_size": 24,
+    "swin_use_checkpoint": true
+  },
+  "scheduler": {
+    "max_lr": 0.001,
+    "steps_per_epoch": 50,
+    "type": "onecycle"
+  },
+  "tc_dice": 0.6870463188271969,
+  "train_loss": 0.23596088802441956,
+  "wt_dice": 0.6925157353281974
+}

@@ -1,0 +1,3472 @@
+{
+  "prediction_file": "outputs\\exp_swinunetr_4class_et_fixed\\predictions\\val_best_cases\\BraTS-GLI-00259-000_pred.nii.gz",
+  "ground_truth_file": "C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\BraTS\\Validation\\BraTS-GLI-00259-000\\BraTS-GLI-00259-000-seg.nii",
+  "total_components": 69,
+  "disconnected_components": 66,
+  "primary_components": {
+    "1": {
+      "class": 1,
+      "component_id": 3,
+      "voxel_count": 8739,
+      "physical_volume_mm3": 8739.0,
+      "bounding_box": {
+        "min": [
+          68,
+          90,
+          45
+        ],
+        "max": [
+          97,
+          116,
+          80
+        ]
+      },
+      "centroid": [
+        83.86428653163978,
+        103.64229316855476,
+        66.07632452225656
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    "2": {
+      "class": 2,
+      "component_id": 4,
+      "voxel_count": 85014,
+      "physical_volume_mm3": 85014.0,
+      "bounding_box": {
+        "min": [
+          53,
+          67,
+          33
+        ],
+        "max": [
+          131,
+          121,
+          116
+        ]
+      },
+      "centroid": [
+        92.03428847013433,
+        94.96461759239655,
+        75.99629472792716
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    "3": {
+      "class": 3,
+      "component_id": 4,
+      "voxel_count": 16352,
+      "physical_volume_mm3": 16352.0,
+      "bounding_box": {
+        "min": [
+          62,
+          87,
+          42
+        ],
+        "max": [
+          101,
+          119,
+          84
+        ]
+      },
+      "centroid": [
+        80.51473825831702,
+        103.62695694716243,
+        62.794948630136986
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    }
+  },
+  "disconnected_details": [
+    {
+      "class": 1,
+      "component_id": 1,
+      "voxel_count": 354,
+      "physical_volume_mm3": 354.0,
+      "bounding_box": {
+        "min": [
+          20,
+          210,
+          216
+        ],
+        "max": [
+          33,
+          223,
+          225
+        ]
+      },
+      "centroid": [
+        26.242937853107346,
+        218.4632768361582,
+        222.62146892655366
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 2,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          66,
+          104,
+          54
+        ],
+        "max": [
+          66,
+          104,
+          54
+        ]
+      },
+      "centroid": [
+        66.0,
+        104.0,
+        54.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 1,
+      "component_id": 4,
+      "voxel_count": 29,
+      "physical_volume_mm3": 29.0,
+      "bounding_box": {
+        "min": [
+          71,
+          99,
+          62
+        ],
+        "max": [
+          74,
+          104,
+          66
+        ]
+      },
+      "centroid": [
+        72.41379310344827,
+        101.3103448275862,
+        63.93103448275862
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 5,
+      "voxel_count": 8,
+      "physical_volume_mm3": 8.0,
+      "bounding_box": {
+        "min": [
+          71,
+          104,
+          67
+        ],
+        "max": [
+          72,
+          107,
+          68
+        ]
+      },
+      "centroid": [
+        71.25,
+        105.5,
+        67.375
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 6,
+      "voxel_count": 7,
+      "physical_volume_mm3": 7.0,
+      "bounding_box": {
+        "min": [
+          71,
+          111,
+          54
+        ],
+        "max": [
+          73,
+          112,
+          56
+        ]
+      },
+      "centroid": [
+        71.85714285714286,
+        111.42857142857143,
+        55.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 1,
+      "component_id": 7,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          74,
+          93,
+          64
+        ],
+        "max": [
+          74,
+          93,
+          64
+        ]
+      },
+      "centroid": [
+        74.0,
+        93.0,
+        64.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 8,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          74,
+          114,
+          61
+        ],
+        "max": [
+          74,
+          114,
+          61
+        ]
+      },
+      "centroid": [
+        74.0,
+        114.0,
+        61.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 1,
+      "component_id": 9,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          75,
+          93,
+          62
+        ],
+        "max": [
+          75,
+          93,
+          62
+        ]
+      },
+      "centroid": [
+        75.0,
+        93.0,
+        62.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 10,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          78,
+          94,
+          57
+        ],
+        "max": [
+          78,
+          94,
+          57
+        ]
+      },
+      "centroid": [
+        78.0,
+        94.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 11,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          78,
+          95,
+          58
+        ],
+        "max": [
+          78,
+          95,
+          58
+        ]
+      },
+      "centroid": [
+        78.0,
+        95.0,
+        58.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 12,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          79,
+          95,
+          57
+        ],
+        "max": [
+          79,
+          95,
+          57
+        ]
+      },
+      "centroid": [
+        79.0,
+        95.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 13,
+      "voxel_count": 5,
+      "physical_volume_mm3": 5.0,
+      "bounding_box": {
+        "min": [
+          121,
+          222,
+          222
+        ],
+        "max": [
+          125,
+          222,
+          222
+        ]
+      },
+      "centroid": [
+        123.0,
+        222.0,
+        222.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 1,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          1,
+          36,
+          198
+        ],
+        "max": [
+          1,
+          36,
+          198
+        ]
+      },
+      "centroid": [
+        1.0,
+        36.0,
+        198.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 2,
+      "voxel_count": 3,
+      "physical_volume_mm3": 3.0,
+      "bounding_box": {
+        "min": [
+          1,
+          204,
+          198
+        ],
+        "max": [
+          1,
+          206,
+          198
+        ]
+      },
+      "centroid": [
+        1.0,
+        205.0,
+        198.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 3,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          1,
+          208,
+          198
+        ],
+        "max": [
+          1,
+          208,
+          198
+        ]
+      },
+      "centroid": [
+        1.0,
+        208.0,
+        198.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 5,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          63,
+          106,
+          58
+        ],
+        "max": [
+          63,
+          106,
+          58
+        ]
+      },
+      "centroid": [
+        63.0,
+        106.0,
+        58.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 6,
+      "voxel_count": 8,
+      "physical_volume_mm3": 8.0,
+      "bounding_box": {
+        "min": [
+          65,
+          109,
+          61
+        ],
+        "max": [
+          65,
+          113,
+          63
+        ]
+      },
+      "centroid": [
+        65.0,
+        110.625,
+        62.125
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 7,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          65,
+          111,
+          54
+        ],
+        "max": [
+          65,
+          111,
+          54
+        ]
+      },
+      "centroid": [
+        65.0,
+        111.0,
+        54.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 8,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          66,
+          105,
+          64
+        ],
+        "max": [
+          66,
+          107,
+          65
+        ]
+      },
+      "centroid": [
+        66.0,
+        105.75,
+        64.75
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 9,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          66,
+          112,
+          53
+        ],
+        "max": [
+          66,
+          112,
+          54
+        ]
+      },
+      "centroid": [
+        66.0,
+        112.0,
+        53.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 10,
+      "voxel_count": 3,
+      "physical_volume_mm3": 3.0,
+      "bounding_box": {
+        "min": [
+          66,
+          114,
+          61
+        ],
+        "max": [
+          66,
+          115,
+          62
+        ]
+      },
+      "centroid": [
+        66.0,
+        114.66666666666667,
+        61.333333333333336
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 11,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          100,
+          59
+        ],
+        "max": [
+          67,
+          100,
+          59
+        ]
+      },
+      "centroid": [
+        67.0,
+        100.0,
+        59.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 12,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          67,
+          104,
+          66
+        ],
+        "max": [
+          67,
+          107,
+          66
+        ]
+      },
+      "centroid": [
+        67.0,
+        105.5,
+        66.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 13,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          105,
+          71
+        ],
+        "max": [
+          67,
+          105,
+          71
+        ]
+      },
+      "centroid": [
+        67.0,
+        105.0,
+        71.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 14,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          114,
+          56
+        ],
+        "max": [
+          67,
+          114,
+          56
+        ]
+      },
+      "centroid": [
+        67.0,
+        114.0,
+        56.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 15,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          114,
+          64
+        ],
+        "max": [
+          67,
+          114,
+          64
+        ]
+      },
+      "centroid": [
+        67.0,
+        114.0,
+        64.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 16,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          68,
+          101,
+          60
+        ],
+        "max": [
+          68,
+          101,
+          60
+        ]
+      },
+      "centroid": [
+        68.0,
+        101.0,
+        60.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 17,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          68,
+          104,
+          67
+        ],
+        "max": [
+          68,
+          107,
+          67
+        ]
+      },
+      "centroid": [
+        68.0,
+        105.5,
+        67.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 18,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          68,
+          114,
+          65
+        ],
+        "max": [
+          68,
+          114,
+          65
+        ]
+      },
+      "centroid": [
+        68.0,
+        114.0,
+        65.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 19,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          69,
+          96,
+          44
+        ],
+        "max": [
+          69,
+          96,
+          44
+        ]
+      },
+      "centroid": [
+        69.0,
+        96.0,
+        44.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 20,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          69,
+          108,
+          70
+        ],
+        "max": [
+          69,
+          109,
+          70
+        ]
+      },
+      "centroid": [
+        69.0,
+        108.5,
+        70.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 21,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          69,
+          111,
+          67
+        ],
+        "max": [
+          69,
+          112,
+          67
+        ]
+      },
+      "centroid": [
+        69.0,
+        111.5,
+        67.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 22,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          69,
+          113,
+          66
+        ],
+        "max": [
+          69,
+          114,
+          66
+        ]
+      },
+      "centroid": [
+        69.0,
+        113.5,
+        66.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 23,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          69,
+          115,
+          65
+        ],
+        "max": [
+          69,
+          115,
+          65
+        ]
+      },
+      "centroid": [
+        69.0,
+        115.0,
+        65.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 24,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          70,
+          117,
+          56
+        ],
+        "max": [
+          70,
+          117,
+          56
+        ]
+      },
+      "centroid": [
+        70.0,
+        117.0,
+        56.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 25,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          71,
+          118,
+          57
+        ],
+        "max": [
+          71,
+          118,
+          57
+        ]
+      },
+      "centroid": [
+        71.0,
+        118.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 26,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          72,
+          118,
+          56
+        ],
+        "max": [
+          72,
+          118,
+          56
+        ]
+      },
+      "centroid": [
+        72.0,
+        118.0,
+        56.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 27,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          73,
+          118,
+          55
+        ],
+        "max": [
+          73,
+          118,
+          55
+        ]
+      },
+      "centroid": [
+        73.0,
+        118.0,
+        55.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 28,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          74,
+          97,
+          83
+        ],
+        "max": [
+          74,
+          97,
+          83
+        ]
+      },
+      "centroid": [
+        74.0,
+        97.0,
+        83.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 29,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          75,
+          117,
+          71
+        ],
+        "max": [
+          75,
+          117,
+          71
+        ]
+      },
+      "centroid": [
+        75.0,
+        117.0,
+        71.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 30,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          78,
+          95,
+          57
+        ],
+        "max": [
+          78,
+          95,
+          57
+        ]
+      },
+      "centroid": [
+        78.0,
+        95.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 31,
+      "voxel_count": 43,
+      "physical_volume_mm3": 43.0,
+      "bounding_box": {
+        "min": [
+          79,
+          103,
+          44
+        ],
+        "max": [
+          86,
+          110,
+          49
+        ]
+      },
+      "centroid": [
+        81.86046511627907,
+        105.53488372093024,
+        46.72093023255814
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 32,
+      "voxel_count": 394,
+      "physical_volume_mm3": 394.0,
+      "bounding_box": {
+        "min": [
+          80,
+          144,
+          64
+        ],
+        "max": [
+          94,
+          151,
+          75
+        ]
+      },
+      "centroid": [
+        86.8502538071066,
+        146.63197969543148,
+        69.50761421319797
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 33,
+      "voxel_count": 44,
+      "physical_volume_mm3": 44.0,
+      "bounding_box": {
+        "min": [
+          81,
+          119,
+          96
+        ],
+        "max": [
+          86,
+          123,
+          101
+        ]
+      },
+      "centroid": [
+        83.3409090909091,
+        121.31818181818181,
+        98.43181818181819
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 34,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          86,
+          115,
+          75
+        ],
+        "max": [
+          86,
+          115,
+          75
+        ]
+      },
+      "centroid": [
+        86.0,
+        115.0,
+        75.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 35,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          91,
+          114,
+          67
+        ],
+        "max": [
+          92,
+          114,
+          67
+        ]
+      },
+      "centroid": [
+        91.5,
+        114.0,
+        67.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 36,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          92,
+          111,
+          75
+        ],
+        "max": [
+          92,
+          111,
+          76
+        ]
+      },
+      "centroid": [
+        92.0,
+        111.0,
+        75.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 37,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          92,
+          113,
+          69
+        ],
+        "max": [
+          92,
+          113,
+          69
+        ]
+      },
+      "centroid": [
+        92.0,
+        113.0,
+        69.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 38,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          93,
+          109,
+          78
+        ],
+        "max": [
+          93,
+          109,
+          79
+        ]
+      },
+      "centroid": [
+        93.0,
+        109.0,
+        78.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 39,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          93,
+          111,
+          74
+        ],
+        "max": [
+          93,
+          111,
+          74
+        ]
+      },
+      "centroid": [
+        93.0,
+        111.0,
+        74.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 40,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          94,
+          108,
+          79
+        ],
+        "max": [
+          94,
+          108,
+          79
+        ]
+      },
+      "centroid": [
+        94.0,
+        108.0,
+        79.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 41,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          94,
+          109,
+          77
+        ],
+        "max": [
+          94,
+          109,
+          77
+        ]
+      },
+      "centroid": [
+        94.0,
+        109.0,
+        77.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 42,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          94,
+          111,
+          73
+        ],
+        "max": [
+          95,
+          111,
+          73
+        ]
+      },
+      "centroid": [
+        94.5,
+        111.0,
+        73.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 43,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          95,
+          112,
+          71
+        ],
+        "max": [
+          96,
+          112,
+          71
+        ]
+      },
+      "centroid": [
+        95.5,
+        112.0,
+        71.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 44,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          97,
+          112,
+          53
+        ],
+        "max": [
+          97,
+          112,
+          53
+        ]
+      },
+      "centroid": [
+        97.0,
+        112.0,
+        53.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 1,
+      "voxel_count": 230,
+      "physical_volume_mm3": 230.0,
+      "bounding_box": {
+        "min": [
+          21,
+          210,
+          216
+        ],
+        "max": [
+          32,
+          222,
+          223
+        ]
+      },
+      "centroid": [
+        26.269565217391303,
+        217.38695652173914,
+        221.18695652173912
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 2,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          21,
+          221,
+          221
+        ],
+        "max": [
+          21,
+          221,
+          221
+        ]
+      },
+      "centroid": [
+        21.0,
+        221.0,
+        221.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 3,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          22,
+          222,
+          218
+        ],
+        "max": [
+          23,
+          222,
+          218
+        ]
+      },
+      "centroid": [
+        22.5,
+        222.0,
+        218.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 5,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          72,
+          102,
+          96
+        ],
+        "max": [
+          74,
+          103,
+          96
+        ]
+      },
+      "centroid": [
+        73.0,
+        102.75,
+        96.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 6,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          79,
+          106,
+          59
+        ],
+        "max": [
+          79,
+          106,
+          59
+        ]
+      },
+      "centroid": [
+        79.0,
+        106.0,
+        59.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 7,
+      "voxel_count": 15,
+      "physical_volume_mm3": 15.0,
+      "bounding_box": {
+        "min": [
+          82,
+          92,
+          62
+        ],
+        "max": [
+          85,
+          94,
+          68
+        ]
+      },
+      "centroid": [
+        83.2,
+        92.86666666666666,
+        64.73333333333333
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 3,
+      "component_id": 8,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          82,
+          96,
+          67
+        ],
+        "max": [
+          83,
+          97,
+          68
+        ]
+      },
+      "centroid": [
+        82.25,
+        96.75,
+        67.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 9,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          83,
+          102,
+          77
+        ],
+        "max": [
+          83,
+          102,
+          77
+        ]
+      },
+      "centroid": [
+        83.0,
+        102.0,
+        77.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 10,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          86,
+          107,
+          72
+        ],
+        "max": [
+          86,
+          107,
+          72
+        ]
+      },
+      "centroid": [
+        86.0,
+        107.0,
+        72.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 11,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          86,
+          109,
+          69
+        ],
+        "max": [
+          86,
+          109,
+          69
+        ]
+      },
+      "centroid": [
+        86.0,
+        109.0,
+        69.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 3,
+      "component_id": 12,
+      "voxel_count": 10,
+      "physical_volume_mm3": 10.0,
+      "bounding_box": {
+        "min": [
+          87,
+          96,
+          69
+        ],
+        "max": [
+          88,
+          97,
+          72
+        ]
+      },
+      "centroid": [
+        87.4,
+        96.7,
+        70.6
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    }
+  ],
+  "all_components": [
+    {
+      "class": 1,
+      "component_id": 1,
+      "voxel_count": 354,
+      "physical_volume_mm3": 354.0,
+      "bounding_box": {
+        "min": [
+          20,
+          210,
+          216
+        ],
+        "max": [
+          33,
+          223,
+          225
+        ]
+      },
+      "centroid": [
+        26.242937853107346,
+        218.4632768361582,
+        222.62146892655366
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 2,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          66,
+          104,
+          54
+        ],
+        "max": [
+          66,
+          104,
+          54
+        ]
+      },
+      "centroid": [
+        66.0,
+        104.0,
+        54.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 1,
+      "component_id": 3,
+      "voxel_count": 8739,
+      "physical_volume_mm3": 8739.0,
+      "bounding_box": {
+        "min": [
+          68,
+          90,
+          45
+        ],
+        "max": [
+          97,
+          116,
+          80
+        ]
+      },
+      "centroid": [
+        83.86428653163978,
+        103.64229316855476,
+        66.07632452225656
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 1,
+      "component_id": 4,
+      "voxel_count": 29,
+      "physical_volume_mm3": 29.0,
+      "bounding_box": {
+        "min": [
+          71,
+          99,
+          62
+        ],
+        "max": [
+          74,
+          104,
+          66
+        ]
+      },
+      "centroid": [
+        72.41379310344827,
+        101.3103448275862,
+        63.93103448275862
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 5,
+      "voxel_count": 8,
+      "physical_volume_mm3": 8.0,
+      "bounding_box": {
+        "min": [
+          71,
+          104,
+          67
+        ],
+        "max": [
+          72,
+          107,
+          68
+        ]
+      },
+      "centroid": [
+        71.25,
+        105.5,
+        67.375
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 6,
+      "voxel_count": 7,
+      "physical_volume_mm3": 7.0,
+      "bounding_box": {
+        "min": [
+          71,
+          111,
+          54
+        ],
+        "max": [
+          73,
+          112,
+          56
+        ]
+      },
+      "centroid": [
+        71.85714285714286,
+        111.42857142857143,
+        55.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 1,
+      "component_id": 7,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          74,
+          93,
+          64
+        ],
+        "max": [
+          74,
+          93,
+          64
+        ]
+      },
+      "centroid": [
+        74.0,
+        93.0,
+        64.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 8,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          74,
+          114,
+          61
+        ],
+        "max": [
+          74,
+          114,
+          61
+        ]
+      },
+      "centroid": [
+        74.0,
+        114.0,
+        61.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 1,
+      "component_id": 9,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          75,
+          93,
+          62
+        ],
+        "max": [
+          75,
+          93,
+          62
+        ]
+      },
+      "centroid": [
+        75.0,
+        93.0,
+        62.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 10,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          78,
+          94,
+          57
+        ],
+        "max": [
+          78,
+          94,
+          57
+        ]
+      },
+      "centroid": [
+        78.0,
+        94.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 11,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          78,
+          95,
+          58
+        ],
+        "max": [
+          78,
+          95,
+          58
+        ]
+      },
+      "centroid": [
+        78.0,
+        95.0,
+        58.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 12,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          79,
+          95,
+          57
+        ],
+        "max": [
+          79,
+          95,
+          57
+        ]
+      },
+      "centroid": [
+        79.0,
+        95.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 1,
+      "component_id": 13,
+      "voxel_count": 5,
+      "physical_volume_mm3": 5.0,
+      "bounding_box": {
+        "min": [
+          121,
+          222,
+          222
+        ],
+        "max": [
+          125,
+          222,
+          222
+        ]
+      },
+      "centroid": [
+        123.0,
+        222.0,
+        222.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 1,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          1,
+          36,
+          198
+        ],
+        "max": [
+          1,
+          36,
+          198
+        ]
+      },
+      "centroid": [
+        1.0,
+        36.0,
+        198.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 2,
+      "voxel_count": 3,
+      "physical_volume_mm3": 3.0,
+      "bounding_box": {
+        "min": [
+          1,
+          204,
+          198
+        ],
+        "max": [
+          1,
+          206,
+          198
+        ]
+      },
+      "centroid": [
+        1.0,
+        205.0,
+        198.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 3,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          1,
+          208,
+          198
+        ],
+        "max": [
+          1,
+          208,
+          198
+        ]
+      },
+      "centroid": [
+        1.0,
+        208.0,
+        198.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 4,
+      "voxel_count": 85014,
+      "physical_volume_mm3": 85014.0,
+      "bounding_box": {
+        "min": [
+          53,
+          67,
+          33
+        ],
+        "max": [
+          131,
+          121,
+          116
+        ]
+      },
+      "centroid": [
+        92.03428847013433,
+        94.96461759239655,
+        75.99629472792716
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 5,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          63,
+          106,
+          58
+        ],
+        "max": [
+          63,
+          106,
+          58
+        ]
+      },
+      "centroid": [
+        63.0,
+        106.0,
+        58.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 6,
+      "voxel_count": 8,
+      "physical_volume_mm3": 8.0,
+      "bounding_box": {
+        "min": [
+          65,
+          109,
+          61
+        ],
+        "max": [
+          65,
+          113,
+          63
+        ]
+      },
+      "centroid": [
+        65.0,
+        110.625,
+        62.125
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 7,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          65,
+          111,
+          54
+        ],
+        "max": [
+          65,
+          111,
+          54
+        ]
+      },
+      "centroid": [
+        65.0,
+        111.0,
+        54.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 8,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          66,
+          105,
+          64
+        ],
+        "max": [
+          66,
+          107,
+          65
+        ]
+      },
+      "centroid": [
+        66.0,
+        105.75,
+        64.75
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 9,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          66,
+          112,
+          53
+        ],
+        "max": [
+          66,
+          112,
+          54
+        ]
+      },
+      "centroid": [
+        66.0,
+        112.0,
+        53.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 10,
+      "voxel_count": 3,
+      "physical_volume_mm3": 3.0,
+      "bounding_box": {
+        "min": [
+          66,
+          114,
+          61
+        ],
+        "max": [
+          66,
+          115,
+          62
+        ]
+      },
+      "centroid": [
+        66.0,
+        114.66666666666667,
+        61.333333333333336
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 11,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          100,
+          59
+        ],
+        "max": [
+          67,
+          100,
+          59
+        ]
+      },
+      "centroid": [
+        67.0,
+        100.0,
+        59.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 12,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          67,
+          104,
+          66
+        ],
+        "max": [
+          67,
+          107,
+          66
+        ]
+      },
+      "centroid": [
+        67.0,
+        105.5,
+        66.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 13,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          105,
+          71
+        ],
+        "max": [
+          67,
+          105,
+          71
+        ]
+      },
+      "centroid": [
+        67.0,
+        105.0,
+        71.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 14,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          114,
+          56
+        ],
+        "max": [
+          67,
+          114,
+          56
+        ]
+      },
+      "centroid": [
+        67.0,
+        114.0,
+        56.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 15,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          67,
+          114,
+          64
+        ],
+        "max": [
+          67,
+          114,
+          64
+        ]
+      },
+      "centroid": [
+        67.0,
+        114.0,
+        64.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 16,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          68,
+          101,
+          60
+        ],
+        "max": [
+          68,
+          101,
+          60
+        ]
+      },
+      "centroid": [
+        68.0,
+        101.0,
+        60.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 17,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          68,
+          104,
+          67
+        ],
+        "max": [
+          68,
+          107,
+          67
+        ]
+      },
+      "centroid": [
+        68.0,
+        105.5,
+        67.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 18,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          68,
+          114,
+          65
+        ],
+        "max": [
+          68,
+          114,
+          65
+        ]
+      },
+      "centroid": [
+        68.0,
+        114.0,
+        65.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 19,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          69,
+          96,
+          44
+        ],
+        "max": [
+          69,
+          96,
+          44
+        ]
+      },
+      "centroid": [
+        69.0,
+        96.0,
+        44.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 20,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          69,
+          108,
+          70
+        ],
+        "max": [
+          69,
+          109,
+          70
+        ]
+      },
+      "centroid": [
+        69.0,
+        108.5,
+        70.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 21,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          69,
+          111,
+          67
+        ],
+        "max": [
+          69,
+          112,
+          67
+        ]
+      },
+      "centroid": [
+        69.0,
+        111.5,
+        67.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 22,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          69,
+          113,
+          66
+        ],
+        "max": [
+          69,
+          114,
+          66
+        ]
+      },
+      "centroid": [
+        69.0,
+        113.5,
+        66.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 23,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          69,
+          115,
+          65
+        ],
+        "max": [
+          69,
+          115,
+          65
+        ]
+      },
+      "centroid": [
+        69.0,
+        115.0,
+        65.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 24,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          70,
+          117,
+          56
+        ],
+        "max": [
+          70,
+          117,
+          56
+        ]
+      },
+      "centroid": [
+        70.0,
+        117.0,
+        56.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 25,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          71,
+          118,
+          57
+        ],
+        "max": [
+          71,
+          118,
+          57
+        ]
+      },
+      "centroid": [
+        71.0,
+        118.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 26,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          72,
+          118,
+          56
+        ],
+        "max": [
+          72,
+          118,
+          56
+        ]
+      },
+      "centroid": [
+        72.0,
+        118.0,
+        56.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 27,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          73,
+          118,
+          55
+        ],
+        "max": [
+          73,
+          118,
+          55
+        ]
+      },
+      "centroid": [
+        73.0,
+        118.0,
+        55.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 28,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          74,
+          97,
+          83
+        ],
+        "max": [
+          74,
+          97,
+          83
+        ]
+      },
+      "centroid": [
+        74.0,
+        97.0,
+        83.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 29,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          75,
+          117,
+          71
+        ],
+        "max": [
+          75,
+          117,
+          71
+        ]
+      },
+      "centroid": [
+        75.0,
+        117.0,
+        71.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 30,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          78,
+          95,
+          57
+        ],
+        "max": [
+          78,
+          95,
+          57
+        ]
+      },
+      "centroid": [
+        78.0,
+        95.0,
+        57.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 31,
+      "voxel_count": 43,
+      "physical_volume_mm3": 43.0,
+      "bounding_box": {
+        "min": [
+          79,
+          103,
+          44
+        ],
+        "max": [
+          86,
+          110,
+          49
+        ]
+      },
+      "centroid": [
+        81.86046511627907,
+        105.53488372093024,
+        46.72093023255814
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 2,
+      "component_id": 32,
+      "voxel_count": 394,
+      "physical_volume_mm3": 394.0,
+      "bounding_box": {
+        "min": [
+          80,
+          144,
+          64
+        ],
+        "max": [
+          94,
+          151,
+          75
+        ]
+      },
+      "centroid": [
+        86.8502538071066,
+        146.63197969543148,
+        69.50761421319797
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 33,
+      "voxel_count": 44,
+      "physical_volume_mm3": 44.0,
+      "bounding_box": {
+        "min": [
+          81,
+          119,
+          96
+        ],
+        "max": [
+          86,
+          123,
+          101
+        ]
+      },
+      "centroid": [
+        83.3409090909091,
+        121.31818181818181,
+        98.43181818181819
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 34,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          86,
+          115,
+          75
+        ],
+        "max": [
+          86,
+          115,
+          75
+        ]
+      },
+      "centroid": [
+        86.0,
+        115.0,
+        75.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 35,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          91,
+          114,
+          67
+        ],
+        "max": [
+          92,
+          114,
+          67
+        ]
+      },
+      "centroid": [
+        91.5,
+        114.0,
+        67.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 36,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          92,
+          111,
+          75
+        ],
+        "max": [
+          92,
+          111,
+          76
+        ]
+      },
+      "centroid": [
+        92.0,
+        111.0,
+        75.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 37,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          92,
+          113,
+          69
+        ],
+        "max": [
+          92,
+          113,
+          69
+        ]
+      },
+      "centroid": [
+        92.0,
+        113.0,
+        69.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 38,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          93,
+          109,
+          78
+        ],
+        "max": [
+          93,
+          109,
+          79
+        ]
+      },
+      "centroid": [
+        93.0,
+        109.0,
+        78.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 39,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          93,
+          111,
+          74
+        ],
+        "max": [
+          93,
+          111,
+          74
+        ]
+      },
+      "centroid": [
+        93.0,
+        111.0,
+        74.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 40,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          94,
+          108,
+          79
+        ],
+        "max": [
+          94,
+          108,
+          79
+        ]
+      },
+      "centroid": [
+        94.0,
+        108.0,
+        79.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 41,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          94,
+          109,
+          77
+        ],
+        "max": [
+          94,
+          109,
+          77
+        ]
+      },
+      "centroid": [
+        94.0,
+        109.0,
+        77.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 42,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          94,
+          111,
+          73
+        ],
+        "max": [
+          95,
+          111,
+          73
+        ]
+      },
+      "centroid": [
+        94.5,
+        111.0,
+        73.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 43,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          95,
+          112,
+          71
+        ],
+        "max": [
+          96,
+          112,
+          71
+        ]
+      },
+      "centroid": [
+        95.5,
+        112.0,
+        71.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 2,
+      "component_id": 44,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          97,
+          112,
+          53
+        ],
+        "max": [
+          97,
+          112,
+          53
+        ]
+      },
+      "centroid": [
+        97.0,
+        112.0,
+        53.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 1,
+      "voxel_count": 230,
+      "physical_volume_mm3": 230.0,
+      "bounding_box": {
+        "min": [
+          21,
+          210,
+          216
+        ],
+        "max": [
+          32,
+          222,
+          223
+        ]
+      },
+      "centroid": [
+        26.269565217391303,
+        217.38695652173914,
+        221.18695652173912
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 2,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          21,
+          221,
+          221
+        ],
+        "max": [
+          21,
+          221,
+          221
+        ]
+      },
+      "centroid": [
+        21.0,
+        221.0,
+        221.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 3,
+      "voxel_count": 2,
+      "physical_volume_mm3": 2.0,
+      "bounding_box": {
+        "min": [
+          22,
+          222,
+          218
+        ],
+        "max": [
+          23,
+          222,
+          218
+        ]
+      },
+      "centroid": [
+        22.5,
+        222.0,
+        218.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 4,
+      "voxel_count": 16352,
+      "physical_volume_mm3": 16352.0,
+      "bounding_box": {
+        "min": [
+          62,
+          87,
+          42
+        ],
+        "max": [
+          101,
+          119,
+          84
+        ]
+      },
+      "centroid": [
+        80.51473825831702,
+        103.62695694716243,
+        62.794948630136986
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 3,
+      "component_id": 5,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          72,
+          102,
+          96
+        ],
+        "max": [
+          74,
+          103,
+          96
+        ]
+      },
+      "centroid": [
+        73.0,
+        102.75,
+        96.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 6,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          79,
+          106,
+          59
+        ],
+        "max": [
+          79,
+          106,
+          59
+        ]
+      },
+      "centroid": [
+        79.0,
+        106.0,
+        59.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 7,
+      "voxel_count": 15,
+      "physical_volume_mm3": 15.0,
+      "bounding_box": {
+        "min": [
+          82,
+          92,
+          62
+        ],
+        "max": [
+          85,
+          94,
+          68
+        ]
+      },
+      "centroid": [
+        83.2,
+        92.86666666666666,
+        64.73333333333333
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 3,
+      "component_id": 8,
+      "voxel_count": 4,
+      "physical_volume_mm3": 4.0,
+      "bounding_box": {
+        "min": [
+          82,
+          96,
+          67
+        ],
+        "max": [
+          83,
+          97,
+          68
+        ]
+      },
+      "centroid": [
+        82.25,
+        96.75,
+        67.5
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 9,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          83,
+          102,
+          77
+        ],
+        "max": [
+          83,
+          102,
+          77
+        ]
+      },
+      "centroid": [
+        83.0,
+        102.0,
+        77.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 10,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          86,
+          107,
+          72
+        ],
+        "max": [
+          86,
+          107,
+          72
+        ]
+      },
+      "centroid": [
+        86.0,
+        107.0,
+        72.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": false
+    },
+    {
+      "class": 3,
+      "component_id": 11,
+      "voxel_count": 1,
+      "physical_volume_mm3": 1.0,
+      "bounding_box": {
+        "min": [
+          86,
+          109,
+          69
+        ],
+        "max": [
+          86,
+          109,
+          69
+        ]
+      },
+      "centroid": [
+        86.0,
+        109.0,
+        69.0
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    },
+    {
+      "class": 3,
+      "component_id": 12,
+      "voxel_count": 10,
+      "physical_volume_mm3": 10.0,
+      "bounding_box": {
+        "min": [
+          87,
+          96,
+          69
+        ],
+        "max": [
+          88,
+          97,
+          72
+        ]
+      },
+      "centroid": [
+        87.4,
+        96.7,
+        70.6
+      ],
+      "inside_brain": null,
+      "in_ground_truth": true
+    }
+  ],
+  "voxel_spacing_mm": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "shape": [
+    155,
+    240,
+    240
+  ]
+}
