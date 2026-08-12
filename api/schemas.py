@@ -40,3 +40,8 @@ class PredictResponse(BaseModel):
 class PredictUploadResponse(BaseModel):
     status: str
     result: dict
+
+
+class ClassAnalysisRequest(BaseModel):
+    mask_path: str
+    classes: set[int]

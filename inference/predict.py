@@ -15,6 +15,7 @@ from monai.inferers import sliding_window_inference
 
 from configs.config import (
     BASELINE_UNET_FEATURES,
+    CHECKPOINT_DIR,
     INPUT_CHANNELS,
     MODEL_NAME,
     NUM_CLASSES,
@@ -25,6 +26,7 @@ from configs.config import (
 )
 from datasets.brats_inference import BraTSInferenceDataset
 from models.model_factory import build_model
+from utils.checkpoint_utils import validate_checkpoint_classes
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -52,6 +54,9 @@ def build_segmentation_model(
     return model
 
 
+DEFAULT_CHECKPOINT_PATH: Path = CHECKPOINT_DIR / "best_mean_dice.pt"
+
+
 def load_checkpoint(model: nn.Module, checkpoint_path: str | Path, device: torch.device) -> None:
     """Load model weights from checkpoint.
 
@@ -60,7 +65,19 @@ def load_checkpoint(model: nn.Module, checkpoint_path: str | Path, device: torch
         checkpoint_path: Path to checkpoint file
         device: Device to load checkpoint onto
     """
+    checkpoint_path = Path(checkpoint_path)
     ckpt = torch.load(str(checkpoint_path), map_location=device)
+
+    if isinstance(ckpt, dict) and "config" in ckpt:
+        config = ckpt["config"]
+        model_cfg = config.get("model") if isinstance(config, dict) else None
+        if isinstance(model_cfg, dict) and model_cfg.get("model_name") != "swinunetr":
+            raise ValueError(
+                f"Checkpoint config model_name={model_cfg.get('model_name')!r} is incompatible with required SwinUNETR"
+            )
+
+    validate_checkpoint_classes(checkpoint_path, NUM_CLASSES)
+
     if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
         state = ckpt["model_state_dict"]
     else:
@@ -462,7 +479,7 @@ def predict_case_explicit(
 def main() -> None:
     parser = argparse.ArgumentParser(description="3D Brain Tumor Segmentation Inference (BraTS)")
     parser.add_argument("--data_dir", type=str, required=True, help="Root directory containing case subfolders")
-    parser.add_argument("--checkpoint", type=str, default="best.pt", help="Path to trained checkpoint (.pt)")
+    parser.add_argument("--checkpoint", type=str, default=str(DEFAULT_CHECKPOINT_PATH), help="Path to trained checkpoint (.pt)")
     parser.add_argument("--out_dir", type=str, required=True, help="Output directory")
     parser.add_argument("--case_index", type=int, default=0, help="Index of case in data_dir to run inference on")
     parser.add_argument("--save_probs", action="store_true", help="If set, save class probabilities as NIfTI")

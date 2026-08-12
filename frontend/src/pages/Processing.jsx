@@ -134,7 +134,7 @@ export default function Processing() {
     try {
       if (!activeJobCreation) {
         activeJobCreation = predictionService.startPrediction(formData, {
-          checkpoint_path: 'outputs/checkpoints/best.pt',
+          checkpoint_path: 'outputs/exp_swinunetr_4class_et_fixed/checkpoints/best_mean_dice.pt',
           save_probabilities: false,
         });
       }

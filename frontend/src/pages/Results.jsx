@@ -11,12 +11,16 @@ export default function Results() {
   const predictionState = location.state;
   const [isDownloading, setIsDownloading] = useState(false);
   const [result, setResult] = useState(null);
+  const [visibleClasses, setVisibleClasses] = useState([1, 2, 3]);
+  const [classAnalysis, setClassAnalysis] = useState(null);
+  const [individualClassAnalysis, setIndividualClassAnalysis] = useState(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [expandedAccordions, setExpandedAccordions] = useState({ 1: false, 2: false, 3: false });
 
+  // Load prediction result from navigation state or sessionStorage
   useEffect(() => {
-    // First, try to get result from navigation state
     let predictionResult = predictionState?.result;
 
-    // If not available, try to restore from sessionStorage
     if (!predictionResult) {
       try {
         const storedPrediction = sessionStorage.getItem('brainTumorLatestPrediction');
@@ -42,34 +46,74 @@ export default function Results() {
     }
   }, [navigate, predictionState]);
 
-  if (!result) {
-    return null;
-  }
+  // Load initial total tumor analysis for WT (classes 1,2,3) - MUST be before early return
+  useEffect(() => {
+    if (result && result.mask_path) {
+      setLoadingAnalysis(true);
+      // Convert Windows backslashes to forward slashes and extract relative path
+      const normalizedMaskPath = result.mask_path.replace(/\\/g, '/');
+      const relativeMaskPath = normalizedMaskPath.replace(/.*outputs\/predictions\//, '');
+      
+      // Fetch total tumor analysis for WT (all classes)
+      predictionService.getClassAnalysis(relativeMaskPath, [1, 2, 3])
+        .then(response => {
+          setClassAnalysis(response);
+        })
+        .catch(error => {
+          console.error('Failed to get total tumor analysis:', error);
+          setClassAnalysis(null);
+        });
+      
+      // Fetch individual class analysis for all classes (for dynamic display)
+      predictionService.getIndividualClassAnalysis(relativeMaskPath)
+        .then(response => {
+          // Extract class_analysis from the response
+          const classAnalysisData = response.class_analysis || {};
+          setIndividualClassAnalysis(classAnalysisData);
+        })
+        .catch(error => {
+          console.error('Failed to get individual class analysis:', error);
+          setIndividualClassAnalysis(null);
+        })
+        .finally(() => setLoadingAnalysis(false));
+    }
+  }, [result]);
+
+  const handleClassChange = async (newVisibleClasses) => {
+    setVisibleClasses(newVisibleClasses);
+    
+    // Class analysis is no longer updated on class change
+    // Total tumor analysis remains constant (WT = classes 1,2,3)
+    // Individual class analysis is already loaded and displayed based on visibleClasses
+  };
+
+  const toggleAccordion = (classId) => {
+    setExpandedAccordions(prev => ({
+      ...prev,
+      [classId]: !prev[classId]
+    }));
+  };
+
+  const handlePredictAnother = () => {
+    navigate('/predict');
+  };
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      // Extract relative path from the full mask_path
-      // Backend returns full path like "outputs/predictions/session_id/case_id_pred.nii.gz"
-      // We need to extract the part after "outputs/predictions/"
-      const relativePath = result.mask_path.replace('outputs/predictions/', '');
-      
-      // Download the file as a blob
+      // Convert Windows backslashes to forward slashes and extract relative path
+      const normalizedPath = result.mask_path.replace(/\\/g, '/');
+      const relativePath = normalizedPath.replace(/.*outputs\/predictions\//, '');
       const blob = await predictionService.downloadPrediction(relativePath);
       
-      // Create a download link and trigger it
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
-      // Extract filename from the path
-      const filename = result.mask_path.split('/').pop();
-      link.download = filename;
+      link.download = result.mask_path.split(/[/\\]/).pop();
       
       document.body.appendChild(link);
       link.click();
       
-      // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
@@ -99,9 +143,10 @@ export default function Results() {
     }
   };
 
-  const handlePredictAnother = () => {
-    navigate('/predict');
-  };
+  // Early return MUST be after all hooks
+  if (!result) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -170,19 +215,200 @@ export default function Results() {
             Tumor Analysis
           </h2>
 
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-100">
-            <p className="text-sm font-medium text-gray-600 mb-2">Estimated Tumor Volume</p>
-            {result.tumor_volume_cm3 !== null && result.tumor_volume_cm3 !== undefined ? (
-              <p className="text-4xl font-bold text-gray-900 mb-2">
-                {parseFloat(result.tumor_volume_cm3).toFixed(2)} cm<sup>3</sup>
+          {/* Total Tumor Analysis - Always Visible */}
+          {classAnalysis && (
+            <div className="space-y-4 mb-6">
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-5 border border-blue-100">
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Tumor (WT)</p>
+                <p className="text-3xl font-bold text-gray-900 mb-3">
+                  {parseFloat(classAnalysis.volume_cm3).toFixed(2)} cm<sup>3</sup>
+                </p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">Height</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {parseFloat(classAnalysis.dimensions_mm.height_mm).toFixed(2)} mm
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">Width</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {parseFloat(classAnalysis.dimensions_mm.width_mm).toFixed(2)} mm
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500 mb-1">Length</p>
+                    <p className="text-xl font-bold text-gray-900">
+                      {parseFloat(classAnalysis.dimensions_mm.length_mm).toFixed(2)} mm
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Individual Class Analysis - Always visible as collapsible accordions */}
+              {individualClassAnalysis && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-500">Individual Class Analysis</p>
+                  
+                  {/* NCR/NET Accordion */}
+                  <div className="bg-red-50 rounded-lg border border-red-100 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleAccordion(1)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-red-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-red-500" />
+                        <p className="text-sm font-semibold text-red-900">NCR/NET</p>
+                      </div>
+                      <span className="text-gray-500">
+                        {expandedAccordions[1] ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    {expandedAccordions[1] && individualClassAnalysis['1'] && (
+                      <div className="p-4 pt-0 border-t border-red-200">
+                        <div className="grid grid-cols-4 gap-3">
+                          <div>
+                            <p className="text-xs text-gray-600">Volume</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['1'].volume_cm3).toFixed(2)} cm³
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Height</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['1'].dimensions_mm.height_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Width</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['1'].dimensions_mm.width_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Length</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['1'].dimensions_mm.length_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Edema Accordion */}
+                  <div className="bg-green-50 rounded-lg border border-green-100 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleAccordion(2)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-green-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-green-500" />
+                        <p className="text-sm font-semibold text-green-900">Edema</p>
+                      </div>
+                      <span className="text-gray-500">
+                        {expandedAccordions[2] ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    {expandedAccordions[2] && individualClassAnalysis['2'] && (
+                      <div className="p-4 pt-0 border-t border-green-200">
+                        <div className="grid grid-cols-4 gap-3">
+                          <div>
+                            <p className="text-xs text-gray-600">Volume</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['2'].volume_cm3).toFixed(2)} cm³
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Height</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['2'].dimensions_mm.height_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Width</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['2'].dimensions_mm.width_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Length</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['2'].dimensions_mm.length_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ET Accordion */}
+                  <div className="bg-fuchsia-50 rounded-lg border border-fuchsia-100 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleAccordion(3)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-fuchsia-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-fuchsia-500" />
+                        <p className="text-sm font-semibold text-fuchsia-900">Enhancing Tumor (ET)</p>
+                      </div>
+                      <span className="text-gray-500">
+                        {expandedAccordions[3] ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    {expandedAccordions[3] && individualClassAnalysis['3'] && (
+                      <div className="p-4 pt-0 border-t border-fuchsia-200">
+                        <div className="grid grid-cols-4 gap-3">
+                          <div>
+                            <p className="text-xs text-gray-600">Volume</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['3'].volume_cm3).toFixed(2)} cm³
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Height</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['3'].dimensions_mm.height_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Width</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['3'].dimensions_mm.width_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-600">Length</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {parseFloat(individualClassAnalysis['3'].dimensions_mm.length_mm).toFixed(2)} mm
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!classAnalysis && (
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200">
+              <p className="text-gray-500 text-center">
+                Loading tumor analysis...
               </p>
-            ) : (
-              <p className="text-4xl font-bold text-gray-400 mb-2">Not available</p>
-            )}
-            <p className="text-sm text-gray-500">
-              Calculated from the AI-generated segmentation mask
-            </p>
-          </div>
+            </div>
+          )}
+
+          {loadingAnalysis && (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+              <span className="ml-3 text-gray-600">Calculating analysis...</span>
+            </div>
+          )}
         </div>
 
         {/* MRI Visualization Workstation */}
@@ -190,6 +416,8 @@ export default function Results() {
           <NiiVueViewer
             mriPath={result.mri_path}
             maskPath={result.mask_path}
+            classMasks={result.class_masks}
+            onClassChange={handleClassChange}
           />
         </div>
 

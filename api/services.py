@@ -18,6 +18,9 @@ from api.utils import (
     create_upload_session,
     save_modalities,
     calculate_tumor_volume,
+    calculate_tumor_dimensions,
+    calculate_tumor_volumes_4class,
+    generate_class_specific_masks,
 )
 from api.validators import UploadValidator
 from inference.predict import predict_case, predict_case_explicit
@@ -193,10 +196,12 @@ def _execute_upload_prediction(
         logger.info(f"[{request_id}] Prediction verified successfully.")
 
         if progress_callback:
-            progress_callback("volume_analysis", "Calculating estimated tumor volume")
+            progress_callback("volume_analysis", "Calculating tumor volumes and dimensions")
 
-        # Calculate tumor volume from the segmentation mask
+        # Calculate tumor metrics from the segmentation mask
         volume_metrics: dict[str, float | int | list[float]] | None = None
+        dimension_metrics: dict[str, float] | None = None
+        class_volumes: dict[str, float] | None = None
         try:
             volume_metrics = calculate_tumor_volume(mask_path)
             logger.info(
@@ -205,6 +210,24 @@ def _execute_upload_prediction(
             )
         except (FileNotFoundError, ValueError) as e:
             logger.warning(f"[{request_id}] Failed to calculate tumor volume: {str(e)}")
+
+        try:
+            dimension_metrics = calculate_tumor_dimensions(mask_path)
+            logger.info(
+                f"[{request_id}] Tumor dimensions calculated: "
+                f"H={dimension_metrics['height_mm']}mm, W={dimension_metrics['width_mm']}mm, L={dimension_metrics['length_mm']}mm"
+            )
+        except (FileNotFoundError, ValueError) as e:
+            logger.warning(f"[{request_id}] Failed to calculate tumor dimensions: {str(e)}")
+
+        try:
+            class_volumes = calculate_tumor_volumes_4class(mask_path)
+            logger.info(
+                f"[{request_id}] 4-class volumes calculated: "
+                f"WT={class_volumes['whole_tumor_cm3']}cm³, TC={class_volumes['tumor_core_cm3']}cm³, ET={class_volumes['enhancing_tumor_cm3']}cm³"
+            )
+        except (FileNotFoundError, ValueError) as e:
+            logger.warning(f"[{request_id}] Failed to calculate 4-class volumes: {str(e)}")
 
         if progress_callback:
             progress_callback(
@@ -224,11 +247,34 @@ def _execute_upload_prediction(
         if result.get("probability_path"):
             result["probability_path"] = Path(result["probability_path"]).as_posix()
 
-        # Add tumor volume to API response (None when calculation failed, 0.0 when no tumor)
+        # Add tumor metrics to API response
         if volume_metrics is not None:
             result["tumor_volume_cm3"] = volume_metrics["tumor_volume_cm3"]
         else:
             result["tumor_volume_cm3"] = None
+
+        if dimension_metrics is not None:
+            result["dimensions_mm"] = dimension_metrics
+        else:
+            result["dimensions_mm"] = None
+
+        if class_volumes is not None:
+            result["volumes"] = class_volumes
+        else:
+            result["volumes"] = None
+
+        # Generate class-specific visualization masks
+        try:
+            class_mask_paths = generate_class_specific_masks(mask_path, prediction_dir)
+            result["class_masks"] = {
+                "ncr_net": class_mask_paths[1].as_posix(),
+                "edema": class_mask_paths[2].as_posix(),
+                "et": class_mask_paths[3].as_posix(),
+            }
+            logger.info(f"[{request_id}] Generated class-specific visualization masks")
+        except Exception as e:
+            logger.warning(f"[{request_id}] Failed to generate class-specific masks: {str(e)}")
+            result["class_masks"] = None
 
         metadata: dict[str, str | float | int | list[float] | None] = {
             "case_id": result.get("case_id"),
@@ -244,6 +290,10 @@ def _execute_upload_prediction(
             metadata["tumor_voxel_count"] = volume_metrics["tumor_voxel_count"]
             metadata["voxel_spacing_mm"] = volume_metrics["voxel_spacing_mm"]
             metadata["voxel_volume_mm3"] = volume_metrics["voxel_volume_mm3"]
+        if dimension_metrics is not None:
+            metadata["dimensions_mm"] = dimension_metrics
+        if class_volumes is not None:
+            metadata["volumes"] = class_volumes
 
         with (prediction_dir / "metadata.json").open("w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
