@@ -4,6 +4,7 @@ import Home from '../pages/Home';
 import PredictPage from '../pages/PredictPage';
 import Processing from '../pages/Processing';
 import Results from '../pages/Results';
+import ModelEvaluation from '../pages/ModelEvaluation';
 
 /**
  * Scalable React Router configuration for Phase 1 and future Phase 2 expansion.
@@ -28,6 +29,10 @@ export const router = createBrowserRouter([
       {
         path: 'results',
         element: <Results />,
+      },
+      {
+        path: 'model-evaluation',
+        element: <ModelEvaluation />,
       },
       {
         path: '*',

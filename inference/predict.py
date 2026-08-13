@@ -468,11 +468,19 @@ def predict_case_explicit(
         save_probs=save_probs,
         progress_callback=progress_callback,
     )
-    logger.info(f"[{request_id}] INFERENCE completed in {time.time() - inference_start:.2f}s")
-    
+    inference_end = time.time()
+    logger.info(f"[{request_id}] INFERENCE completed in {inference_end - inference_start:.2f}s")
+
     total_time = time.time() - start_time
     logger.info(f"[{request_id}] END total_time={total_time:.2f}s, mask={result['mask_path']}")
-    
+
+    result["timing"] = {
+        "model_load_s": round(image_load_start - model_load_start, 3),
+        "mri_load_s": round(inference_start - image_load_start, 3),
+        "inference_s": round(inference_end - inference_start, 3),
+        "total_s": round(total_time, 3),
+    }
+
     return result
 
 

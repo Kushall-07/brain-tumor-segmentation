@@ -8,6 +8,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 import shutil
+from typing import Any
 
 from api.exceptions import CheckpointError, InferenceError, ValidationError
 from api.jobs import complete_job, create_job, fail_job, update_job
@@ -17,6 +18,7 @@ from api.utils import (
     create_prediction_dir,
     create_upload_session,
     save_modalities,
+    save_ground_truth,
     calculate_tumor_volume,
     calculate_tumor_dimensions,
     calculate_tumor_volumes_4class,
@@ -24,8 +26,20 @@ from api.utils import (
 )
 from api.validators import UploadValidator
 from inference.predict import predict_case, predict_case_explicit
+from utils.segmentation_evaluation import (
+    evaluate_segmentation_masks,
+    generate_comparison_mask,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _is_uploaded_file(upload_file) -> bool:
+    """Return True when an optional UploadFile part contains a real filename."""
+    if upload_file is None:
+        return False
+    filename = getattr(upload_file, "filename", None)
+    return bool(filename and str(filename).strip())
 
 
 def predict_case_service(
@@ -98,6 +112,7 @@ def _execute_upload_prediction(
     save_probabilities: bool = False,
     upload_session: Path | None = None,
     modality_paths: ModalityPaths | None = None,
+    ground_truth_path: Path | None = None,
     progress_callback: Callable[[str, str], None] | None = None,
     request_id: str | None = None,
 ) -> dict[str, str | float | None]:
@@ -276,7 +291,63 @@ def _execute_upload_prediction(
             logger.warning(f"[{request_id}] Failed to generate class-specific masks: {str(e)}")
             result["class_masks"] = None
 
-        metadata: dict[str, str | float | int | list[float] | None] = {
+        # Ground-truth evaluation (optional)
+        result["ground_truth_available"] = False
+        result["ground_truth_path"] = None
+        result["validation_metrics"] = None
+        result["validation_error"] = None
+        result["validation_error_type"] = None
+        result["comparison_mask_path"] = None
+        result["comparison_error"] = None
+
+        if ground_truth_path is not None and ground_truth_path.exists():
+            gt_copy_path = prediction_dir / "BraTS-Patient_gt.nii.gz"
+            shutil.copy2(ground_truth_path, gt_copy_path)
+            result["ground_truth_path"] = gt_copy_path.as_posix()
+            result["ground_truth_available"] = True
+
+            logger.info("[%s] Ground-truth saved for evaluation: %s", request_id, gt_copy_path.as_posix())
+            logger.info("[%s] Prediction mask for evaluation: %s", request_id, mask_path.as_posix())
+            print(f"[VALIDATION] case ID: {result.get('case_id', request_id)}", flush=True)
+            print(f"[VALIDATION] ground truth filename: {gt_copy_path.name}", flush=True)
+            print(f"[VALIDATION] prediction filename: {mask_path.name}", flush=True)
+
+            try:
+                validation_result = evaluate_segmentation_masks(mask_path, gt_copy_path)
+                if validation_result.get("available"):
+                    result["validation_metrics"] = validation_result
+                    logger.info("[%s] Ground-truth validation metrics computed", request_id)
+                else:
+                    result["validation_metrics"] = None
+                    result["validation_error"] = validation_result.get("reason", "Validation failed")
+                    result["validation_error_type"] = validation_result.get("error_type")
+                    logger.warning(
+                        "[%s] Ground-truth metric computation failed: %s (%s)",
+                        request_id,
+                        result["validation_error"],
+                        result.get("validation_error_type"),
+                    )
+            except Exception as e:
+                logger.warning("[%s] Ground-truth metric computation failed: %s", request_id, e, exc_info=True)
+                result["validation_metrics"] = None
+                result["validation_error"] = str(e)
+                result["validation_error_type"] = type(e).__name__
+
+            try:
+                comparison_path = prediction_dir / "BraTS-Patient_comparison.nii.gz"
+                generate_comparison_mask(
+                    mask_path,
+                    gt_copy_path,
+                    comparison_path,
+                    modality_paths.flair if modality_paths else flair_copy_path,
+                )
+                result["comparison_mask_path"] = comparison_path.as_posix()
+                logger.info("[%s] Comparison mask generated: %s", request_id, comparison_path.as_posix())
+            except Exception as e:
+                logger.warning("[%s] Comparison mask generation failed: %s", request_id, e, exc_info=True)
+                result["comparison_error"] = str(e)
+
+        metadata: dict[str, str | float | int | list[float] | dict | None] = {
             "case_id": result.get("case_id"),
             "mask_path": result["mask_path"],
             "mri_path": result["mri_path"],
@@ -294,6 +365,21 @@ def _execute_upload_prediction(
             metadata["dimensions_mm"] = dimension_metrics
         if class_volumes is not None:
             metadata["volumes"] = class_volumes
+        if result.get("timing"):
+            metadata["timing"] = result["timing"]
+        metadata["ground_truth_available"] = bool(result.get("ground_truth_available"))
+        if result.get("ground_truth_path"):
+            metadata["ground_truth_path"] = result["ground_truth_path"]
+        if result.get("validation_metrics"):
+            metadata["validation_metrics"] = result["validation_metrics"]
+        if result.get("validation_error"):
+            metadata["validation_error"] = result["validation_error"]
+        if result.get("validation_error_type"):
+            metadata["validation_error_type"] = result["validation_error_type"]
+        if result.get("comparison_mask_path"):
+            metadata["comparison_mask_path"] = result["comparison_mask_path"]
+        if result.get("comparison_error"):
+            metadata["comparison_error"] = result["comparison_error"]
 
         with (prediction_dir / "metadata.json").open("w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2)
@@ -317,6 +403,52 @@ def _execute_upload_prediction(
         if session_created_here and upload_session is not None:
             cleanup_upload_session(upload_session)
             logger.info(f"[{request_id}] Temporary upload session cleaned.")
+
+
+def validate_case_metrics(
+    prediction_mask_path: str | Path,
+    ground_truth_mask_path: str | Path,
+) -> dict[str, Any]:
+    """Resolve mask paths and compute validation metrics for an existing case."""
+    pred_resolved = _resolve_prediction_mask_path(prediction_mask_path)
+    gt_resolved = _resolve_prediction_mask_path(ground_truth_mask_path)
+
+    print("[VALIDATION] case validation request", flush=True)
+    print(f"[VALIDATION] prediction filename: {pred_resolved.name}", flush=True)
+    print(f"[VALIDATION] ground truth filename: {gt_resolved.name}", flush=True)
+
+    return evaluate_segmentation_masks(pred_resolved, gt_resolved)
+
+
+def _resolve_prediction_mask_path(mask_path: str | Path) -> Path:
+    """Resolve a mask path to an absolute path within outputs/predictions when possible."""
+    mask_path_obj = Path(mask_path)
+    predictions_dir = Path("outputs/predictions").resolve()
+
+    if mask_path_obj.is_absolute():
+        requested_path = mask_path_obj.resolve()
+    else:
+        normalized = str(mask_path).replace("\\", "/")
+        if "outputs/predictions/" in normalized:
+            relative = normalized.split("outputs/predictions/", 1)[1]
+            requested_path = (predictions_dir / relative).resolve()
+        else:
+            requested_path = (predictions_dir / mask_path_obj).resolve()
+
+    try:
+        requested_path.relative_to(predictions_dir)
+    except ValueError as exc:
+        raise ValueError(
+            f"Mask path is outside predictions directory: {requested_path}"
+        ) from exc
+
+    if not requested_path.exists():
+        raise FileNotFoundError(f"Mask file not found: {requested_path}")
+
+    if not requested_path.is_file():
+        raise ValueError(f"Path is not a file: {requested_path}")
+
+    return requested_path
 
 
 def predict_case_upload_service(
@@ -363,6 +495,7 @@ def _run_prediction_job(
     modality_paths: ModalityPaths,
     checkpoint_path: str | Path,
     save_probabilities: bool,
+    ground_truth_path: Path | None = None,
 ) -> None:
     """Background worker that runs the full prediction pipeline for a job."""
 
@@ -381,6 +514,7 @@ def _run_prediction_job(
             save_probabilities=save_probabilities,
             upload_session=upload_session,
             modality_paths=modality_paths,
+            ground_truth_path=ground_truth_path,
             progress_callback=progress_callback,
             request_id=request_id,
         )
@@ -406,6 +540,7 @@ def start_prediction_job(
     t2,
     checkpoint_path: str | Path,
     save_probabilities: bool = False,
+    seg=None,
 ) -> dict[str, str]:
     """Accept uploads, persist files, create a job, and start background inference.
 
@@ -441,6 +576,18 @@ def start_prediction_job(
     patient_folder.mkdir(parents=True, exist_ok=True)
     modality_paths = save_modalities(t1, t1ce, t2, flair, patient_folder)
 
+    ground_truth_path: Path | None = None
+    if _is_uploaded_file(seg):
+        from api.schemas import MODALITY_SEG
+
+        logger.info("[GT] Saving ground-truth segmentation: %s", seg.filename)
+        UploadValidator.validate_upload(seg, MODALITY_SEG)
+        ground_truth_path = save_ground_truth(seg, patient_folder)
+        UploadValidator.validate_nifti_file(ground_truth_path)
+        logger.info("[GT] Ground truth saved to: %s", ground_truth_path.as_posix())
+    else:
+        logger.info("[GT] No ground-truth segmentation provided with this upload")
+
     job_id = create_job()
 
     thread = threading.Thread(
@@ -451,6 +598,7 @@ def start_prediction_job(
             modality_paths,
             checkpoint_path,
             save_probabilities,
+            ground_truth_path,
         ),
         daemon=True,
         name=f"prediction-job-{job_id[:8]}",

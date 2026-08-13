@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 import threading
+import time
 import uuid
 from typing import Any
 
@@ -31,6 +32,8 @@ def create_job() -> str:
             "message": "MRI volumes received",
             "result": None,
             "error": None,
+            "started_at": time.time(),
+            "completed_at": None,
         }
     return job_id
 
@@ -73,12 +76,21 @@ def update_job(
 
 def complete_job(job_id: str, result: dict[str, Any]) -> None:
     """Mark a job as successfully completed with its prediction result."""
+    final_result = dict(result)
+    with _lock:
+        job = _jobs.get(job_id)
+        if job is not None:
+            job["completed_at"] = time.time()
+            if job.get("started_at"):
+                final_result["job_timing"] = {
+                    "total_s": round(job["completed_at"] - job["started_at"], 3),
+                }
     update_job(
         job_id,
         status="completed",
         stage="completed",
         message="Analysis completed successfully",
-        result=result,
+        result=final_result,
         error=None,
     )
 

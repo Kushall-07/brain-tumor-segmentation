@@ -145,6 +145,19 @@ def save_modalities(
     )
 
 
+def save_ground_truth(seg: UploadFile, patient_folder: Path) -> Path:
+    """Save optional ground-truth segmentation mask."""
+    filename = seg.filename or "seg.nii.gz"
+    fn_lower = filename.lower()
+    if fn_lower.endswith(".nii.gz"):
+        ext = ".nii.gz"
+    elif fn_lower.endswith(".nii"):
+        ext = ".nii"
+    else:
+        ext = ".nii.gz"
+    return save_uploaded_file(seg, patient_folder / f"seg{ext}")
+
+
 def calculate_tumor_volume(mask_path: Union[str, Path]) -> dict[str, float | int | list[float]]:
     """Calculate tumor volume from a segmentation mask NIfTI file.
 

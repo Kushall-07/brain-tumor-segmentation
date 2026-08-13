@@ -1,32 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-50: #ecfeff;
-  --color-primary-100: #cffafe;
-  --color-primary-200: #a5f3fc;
-  --color-primary-300: #67e8f9;
-  --color-primary-400: #22d3ee;
-  --color-primary-500: #06b6d4;
-  --color-primary-600: #0891b2;
-  --color-primary-700: #0e7490;
-  --color-primary-800: #155e75;
-  --color-primary-900: #164e63;
-  --color-primary-950: #083344;
+  /* Medical atlas palette */
+  --color-parchment: #EDE4D3;
+  --color-parchment-dark: #E8DCC4;
 
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
+  /* Text hierarchy — dark warm ink on parchment */
+  --color-ink: #241E1A;
+  --color-ink-deep: #2B2420;
+  --color-ink-body: #302822;
+  --color-ink-label: #3F342C;
+  --color-ink-caption: #4A3C32;
+  --color-ink-nav: #30251F;
+  --color-ink-mono: #201B18;
 
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --color-arterial: #8B2E2E;
+  --color-arterial-light: #A13333;
+  --color-annotation: #2C4356;
+  --color-brass: #B08B4F;
+  --color-sepia-muted: #594B3F;
+  --color-sepia-border: #C4B59A;
+
+  /* Legacy primary remapped to arterial for utility compatibility */
+  --color-primary-50: #F5EDED;
+  --color-primary-100: #E8D4D4;
+  --color-primary-200: #D4A8A8;
+  --color-primary-300: #C07D7D;
+  --color-primary-400: #A13333;
+  --color-primary-500: #8B2E2E;
+  --color-primary-600: #7A2828;
+  --color-primary-700: #692222;
+  --color-primary-800: #581C1C;
+  --color-primary-900: #471616;
+  --color-primary-950: #361010;
+
+  --font-serif: 'Playfair Display', 'Source Serif 4', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+
+  /* Font size overrides */
+  --text-xs: 13px;
+  --text-xs--line-height: 18px;
+  --text-sm: 15px;
+  --text-sm--line-height: 21px;
 
   --animate-spin: spin 1s linear infinite;
   --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -40,11 +56,24 @@
   }
 
   body {
-    @apply bg-slate-950 text-white;
+    @apply bg-parchment text-ink-body;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
   }
 
   * {
-    @apply border-slate-800;
+    @apply border-sepia-border;
   }
 
   ::-webkit-scrollbar {
@@ -53,15 +82,15 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-slate-900;
+    @apply bg-parchment-dark;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-700 rounded-full;
+    @apply bg-sepia-border rounded-sm;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-600;
+    @apply bg-sepia-muted;
   }
 
   input[type="range"] {
@@ -69,55 +98,108 @@
   }
 
   input[type="range"]::-webkit-slider-runnable-track {
-    @apply h-2 rounded-lg bg-slate-700;
+    @apply h-1.5 rounded-sm bg-sepia-border;
   }
 
   input[type="range"]::-webkit-slider-thumb {
-    @apply appearance-none w-4 h-4 rounded-full bg-primary-500 -mt-1 transition-transform hover:scale-110;
+    @apply appearance-none w-3.5 h-3.5 rounded-sm bg-brass -mt-1 transition-colors hover:bg-arterial;
   }
 
   input[type="range"]::-moz-range-track {
-    @apply h-2 rounded-lg bg-slate-700 border-0;
+    @apply h-1.5 rounded-sm bg-sepia-border border-0;
   }
 
   input[type="range"]::-moz-range-thumb {
-    @apply w-4 h-4 rounded-full bg-primary-500 border-0;
+    @apply w-3.5 h-3.5 rounded-sm bg-brass border-0;
   }
 
   input[type="checkbox"] {
-    @apply w-4 h-4 rounded border-slate-600 text-primary-500 focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-slate-900;
+    @apply w-4 h-4 rounded-sm border-sepia-border text-arterial focus:ring-2 focus:ring-arterial/30 focus:ring-offset-2 focus:ring-offset-parchment;
   }
 }
 
 @layer components {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  .atlas-label {
+    @apply text-xs font-medium uppercase tracking-[0.12em] text-ink-caption;
+    font-variant: small-caps;
+  }
+
+  .atlas-heading {
+    font-family: var(--font-serif);
+    @apply text-ink font-semibold tracking-tight;
+  }
+
+  .atlas-divider {
+    @apply border-t border-sepia-border;
+  }
+
+  .atlas-card {
+    @apply bg-parchment border border-sepia-border rounded-sm p-6;
+  }
+
+  .paper-bg {
+    @apply bg-parchment;
+  }
+
   .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl transition-all hover:from-primary-600 hover:to-primary-700 shadow-lg shadow-primary-500/25 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-slate-950;
+    @apply px-6 py-3 bg-arterial text-parchment font-medium rounded-sm transition-colors hover:bg-arterial-light focus:outline-none focus:ring-2 focus:ring-arterial/40 focus:ring-offset-2 focus:ring-offset-parchment;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-slate-800 text-white font-semibold rounded-xl transition-all hover:bg-slate-700 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500/50 focus:ring-offset-2 focus:ring-offset-slate-950;
+    @apply px-6 py-3 bg-annotation text-parchment font-medium rounded-sm transition-colors hover:bg-annotation/90 border border-annotation focus:outline-none focus:ring-2 focus:ring-annotation/40 focus:ring-offset-2 focus:ring-offset-parchment;
+  }
+
+  .btn-subtle {
+    @apply px-6 py-3 bg-parchment text-ink-body font-medium rounded-sm transition-colors border border-sepia-border hover:bg-parchment-dark hover:border-sepia-muted;
   }
 
   .card {
-    @apply bg-slate-800/50 border border-slate-700 rounded-xl p-6 transition-all hover:border-slate-600;
+    @apply bg-parchment border border-sepia-border rounded-sm p-6 transition-colors hover:border-sepia-muted;
   }
 
   .input-file {
-    @apply w-full py-3 px-4 text-center rounded-lg border-2 border-dashed cursor-pointer transition-all;
+    @apply w-full py-3 px-4 text-center rounded-sm border border-dashed border-sepia-border cursor-pointer transition-colors hover:border-sepia-muted;
   }
 
   .modal-overlay {
-    @apply fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4;
+    @apply fixed inset-0 bg-ink-deep/80 z-50 flex items-center justify-center p-4;
   }
 
   .modal-content {
-    @apply bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+    @apply bg-parchment border border-sepia-border rounded-sm max-w-2xl w-full max-h-[90vh] overflow-y-auto;
+  }
+
+  .atlas-section-header {
+    @apply flex items-center gap-3 pb-4 mb-6 border-b border-sepia-border;
+  }
+
+  .atlas-value {
+    font-family: var(--font-mono);
+    @apply text-ink-mono font-medium tabular-nums;
+  }
+
+  .atlas-metadata-field {
+    @apply bg-parchment-dark border border-sepia-border rounded-sm p-4;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Numeric / monospace values — darkest readable ink */
+  .font-mono.text-ink,
+  .text-ink.font-mono {
+    color: var(--color-ink-mono);
   }
 
   .animate-in {
@@ -133,13 +215,5 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-
-  .glass {
-    @apply bg-slate-800/50 backdrop-blur-sm border border-slate-700;
-  }
-
-  .gradient-text {
-    @apply bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent;
   }
 }

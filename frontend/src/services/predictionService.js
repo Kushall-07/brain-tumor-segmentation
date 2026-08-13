@@ -174,7 +174,7 @@ export const predictionService = {
     try {
       const response = await api.post('/predict/individual-class-analysis', {
         mask_path: maskPath,
-        classes: [],  // Parameter is ignored by endpoint
+        classes: [],
       });
       return response.data;
     } catch (error) {
@@ -194,6 +194,39 @@ export const predictionService = {
           message: error.message || 'Individual class analysis request failed',
         };
       }
+    }
+  },
+
+  async getMethodsSummary() {
+    const response = await api.get('/research/methods');
+    return response.data;
+  },
+
+  async getModelInfo(checkpointPath) {
+    const response = await api.get('/research/model-info', {
+      params: checkpointPath ? { checkpoint_path: checkpointPath } : {},
+    });
+    return response.data;
+  },
+
+  async validateCase(predictionMaskPath, groundTruthMaskPath) {
+    try {
+      const response = await api.post('/predict/validate-case', {
+        prediction_mask_path: predictionMaskPath,
+        ground_truth_mask_path: groundTruthMaskPath,
+      });
+      console.log('[VALIDATION] API RESPONSE:', response.data);
+      return response.data.validation;
+    } catch (error) {
+      if (error.response) {
+        throw {
+          status: error.response.status,
+          message: error.response.data.detail || 'Validation failed',
+          response: error.response,
+          data: error.response.data,
+        };
+      }
+      throw error;
     }
   },
 };

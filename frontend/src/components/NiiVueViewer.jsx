@@ -449,29 +449,30 @@ export default function NiiVueViewer({ mriPath, maskPath, classMasks, onClassCha
   };
 
   return (
-    <div className="w-full rounded-xl border border-stone-200 overflow-hidden bg-white">
-      <div className="flex flex-col gap-3 border-b border-stone-200 bg-stone-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="w-full overflow-hidden bg-parchment border-t border-sepia-border">
+      <div className="flex flex-col gap-3 border-b border-sepia-border bg-parchment-dark px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-semibold text-stone-900">MRI Viewer</h3>
-          <p className="text-sm text-stone-500">
+          <p className="atlas-label mb-0.5">Fig. 2</p>
+          <h3 className="font-serif text-base font-semibold text-ink tracking-wide uppercase">MRI Visualization</h3>
+          <p className="text-sm text-ink-body">
             Multi-planar MRI with segmentation overlay
           </p>
         </div>
-        <span className="inline-flex w-fit items-center rounded-full border border-stone-200 bg-white px-3 py-1 text-xs font-medium text-stone-600">
-          4-View
+        <span className="inline-flex w-fit items-center rounded-sm border border-brass/50 bg-parchment px-3 py-1 text-xs font-mono font-medium text-brass tracking-wider">
+          4-VIEW
         </span>
       </div>
 
       {!loading && !error && (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-stone-200 bg-white px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-sepia-border bg-parchment px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-stone-700">Tools</span>
+            <span className="atlas-label">Tools</span>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => handleToolChange('crosshair')}
                 aria-pressed={activeTool === 'crosshair'}
-                className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${activeTool === 'crosshair' ? 'border-teal-300 bg-teal-50 text-teal-800' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'}`}
+                className={`inline-flex items-center rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${activeTool === 'crosshair' ? 'border-annotation bg-parchment-dark text-annotation' : 'border-sepia-border bg-parchment text-ink-nav hover:bg-parchment-dark hover:text-ink'}`}
               >
                 Crosshair
               </button>
@@ -479,7 +480,7 @@ export default function NiiVueViewer({ mriPath, maskPath, classMasks, onClassCha
                 type="button"
                 onClick={() => handleToolChange('ruler')}
                 aria-pressed={activeTool === 'ruler'}
-                className={`inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${activeTool === 'ruler' ? 'border-teal-300 bg-teal-50 text-teal-800' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'}`}
+                className={`inline-flex items-center rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${activeTool === 'ruler' ? 'border-annotation bg-parchment-dark text-annotation' : 'border-sepia-border bg-parchment text-ink-nav hover:bg-parchment-dark hover:text-ink'}`}
               >
                 Ruler
               </button>
@@ -487,23 +488,23 @@ export default function NiiVueViewer({ mriPath, maskPath, classMasks, onClassCha
           </div>
 
           {measurementResult && (
-            <div className="flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-3 py-1.5">
-              <span className="text-sm font-medium text-stone-700">Distance</span>
-              <span className="text-sm font-semibold text-stone-900 tabular-nums">
+            <div className="flex items-center gap-2 rounded-sm border border-sepia-border bg-parchment-dark px-3 py-1.5">
+              <span className="atlas-label">Distance</span>
+              <span className="text-sm font-mono font-medium text-ink tabular-nums">
                 {`${measurementResult.value.toFixed(2)} mm`}
               </span>
             </div>
           )}
 
           {instructionText && !measurementResult && (
-            <div className="text-sm text-stone-500">{instructionText}</div>
+            <div className="text-sm text-ink-body italic">{instructionText}</div>
           )}
 
           {activeTool === 'ruler' && (
             <button
               type="button"
               onClick={handleClearMeasurements}
-              className="inline-flex items-center rounded-md border border-stone-200 px-3 py-1.5 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50"
+              className="inline-flex items-center rounded-sm border border-sepia-border px-3 py-1.5 text-sm font-medium text-ink-nav transition-colors hover:bg-parchment-dark hover:text-ink"
             >
               Clear Measurements
             </button>
@@ -512,22 +513,22 @@ export default function NiiVueViewer({ mriPath, maskPath, classMasks, onClassCha
           <div className="hidden flex-1 lg:block" aria-hidden="true" />
 
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-stone-700">Segmentation</span>
+            <span className="atlas-label">Segmentation</span>
             <button
               type="button"
               onClick={handleToggleOverlay}
               aria-pressed={showOverlay}
-              className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${showOverlay ? 'border-teal-200 bg-teal-50 text-teal-800' : 'border-stone-200 bg-stone-100 text-stone-600'}`}
+              className={`inline-flex items-center gap-2 rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${showOverlay ? 'border-annotation/30 bg-parchment-dark text-annotation' : 'border-sepia-border bg-parchment text-ink-nav'}`}
             >
-              <span className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${showOverlay ? 'bg-teal-600' : 'bg-stone-300'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${showOverlay ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              <span className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-sm transition-colors ${showOverlay ? 'bg-annotation' : 'bg-sepia-border'}`}>
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-sm bg-parchment transition-transform ${showOverlay ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </span>
-              <span>{showOverlay ? 'ON' : 'OFF'}</span>
+              <span className="font-mono text-xs tracking-wider">{showOverlay ? 'ON' : 'OFF'}</span>
             </button>
           </div>
 
           <div className="flex min-w-[220px] flex-1 flex-wrap items-center gap-3 sm:flex-none">
-            <label htmlFor="overlay-opacity" className={`text-sm font-medium ${showOverlay ? 'text-stone-700' : 'text-stone-400'}`}>
+            <label htmlFor="overlay-opacity" className={`atlas-label ${showOverlay ? '' : 'opacity-50'}`}>
               Overlay Opacity
             </label>
             <input
@@ -538,21 +539,21 @@ export default function NiiVueViewer({ mriPath, maskPath, classMasks, onClassCha
               value={overlayOpacity}
               onChange={handleOpacityChange}
               disabled={!showOverlay}
-              className={`h-2 w-36 appearance-none rounded-lg sm:w-44 ${showOverlay ? 'cursor-pointer bg-stone-200 accent-teal-600' : 'cursor-not-allowed bg-stone-100 accent-stone-300 opacity-60'}`}
+              className={`h-2 w-36 sm:w-44 ${showOverlay ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
             />
-            <span className={`min-w-[3rem] text-sm font-medium tabular-nums ${showOverlay ? 'text-stone-700' : 'text-stone-400'}`}>
+            <span className={`min-w-[3rem] text-sm font-mono font-medium tabular-nums ${showOverlay ? 'text-ink-mono' : 'text-sepia-muted'}`}>
               {overlayOpacity}%
             </span>
           </div>
 
-          <div className="flex items-center gap-3 border-l border-stone-200 pl-4">
-            <span className="text-sm font-medium text-stone-700">Classes</span>
+          <div className="flex items-center gap-3 border-l border-sepia-border pl-4">
+            <span className="atlas-label">Classes</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => handleClassToggle(1)}
                 aria-pressed={visibleClasses.includes(1)}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${visibleClasses.includes(1) ? 'border-red-300 bg-red-50 text-red-800' : 'border-stone-200 bg-stone-50 text-stone-500'}`}
+                className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-medium uppercase tracking-wide transition-colors ${visibleClasses.includes(1) ? 'border-red-700/40 bg-parchment-dark text-ink' : 'border-sepia-border bg-parchment text-ink-nav'}`}
               >
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
                 NCR/NET
@@ -561,7 +562,7 @@ export default function NiiVueViewer({ mriPath, maskPath, classMasks, onClassCha
                 type="button"
                 onClick={() => handleClassToggle(2)}
                 aria-pressed={visibleClasses.includes(2)}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${visibleClasses.includes(2) ? 'border-green-300 bg-green-50 text-green-800' : 'border-stone-200 bg-stone-50 text-stone-500'}`}
+                className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-medium uppercase tracking-wide transition-colors ${visibleClasses.includes(2) ? 'border-green-700/40 bg-parchment-dark text-ink' : 'border-sepia-border bg-parchment text-ink-nav'}`}
               >
                 <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
                 Edema
@@ -570,7 +571,7 @@ export default function NiiVueViewer({ mriPath, maskPath, classMasks, onClassCha
                 type="button"
                 onClick={() => handleClassToggle(3)}
                 aria-pressed={visibleClasses.includes(3)}
-                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${visibleClasses.includes(3) ? 'border-fuchsia-300 bg-fuchsia-50 text-fuchsia-800' : 'border-stone-200 bg-stone-50 text-stone-500'}`}
+                className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-medium uppercase tracking-wide transition-colors ${visibleClasses.includes(3) ? 'border-fuchsia-700/40 bg-parchment-dark text-ink' : 'border-sepia-border bg-parchment text-ink-nav'}`}
               >
                 <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-500" />
                 ET
