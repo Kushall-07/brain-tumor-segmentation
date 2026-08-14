@@ -1,0 +1,566 @@
+{
+  "checkpoint": "C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\brain-tumor-segmentation\\outputs\\exp_swinunetr_4class_final\\checkpoints\\best_mean_dice.pt",
+  "num_classes_config": 4,
+  "checkpoint_out_channels": 4,
+  "logit_channels_verified": 4,
+  "use_ema": true,
+  "use_tta_during_this_audit": false,
+  "use_tta_config_inference_only": true,
+  "pred_unique_classes_across_val": [
+    0,
+    1,
+    2
+  ],
+  "validation_cases": 20,
+  "gt_et_positive": 0,
+  "gt_et_negative": 20,
+  "predicted_et_positive": 0,
+  "predicted_et_negative": 20,
+  "empty_empty_cases": 20,
+  "genuine_et_positive_cases": 0,
+  "current_mean_et_dice": 1.0,
+  "et_dice_on_et_positive_cases": NaN,
+  "et_dice_on_et_positive_raw_no_empty_rule": NaN,
+  "potentially_inflated": true,
+  "sample_first_3_cases": [
+    {
+      "case_id": "BraTS-GLI-00241-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.567963696899824e-05,
+      "max_softmax_class3": 0.0017018268117681146
+    },
+    {
+      "case_id": "BraTS-GLI-00242-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.8094429328339174e-05,
+      "max_softmax_class3": 0.0016256729140877724
+    },
+    {
+      "case_id": "BraTS-GLI-00243-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.487374098971486e-05,
+      "max_softmax_class3": 0.0017565351445227861
+    }
+  ],
+  "per_case": [
+    {
+      "case_id": "BraTS-GLI-00241-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.567963696899824e-05,
+      "max_softmax_class3": 0.0017018268117681146
+    },
+    {
+      "case_id": "BraTS-GLI-00242-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.8094429328339174e-05,
+      "max_softmax_class3": 0.0016256729140877724
+    },
+    {
+      "case_id": "BraTS-GLI-00243-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.487374098971486e-05,
+      "max_softmax_class3": 0.0017565351445227861
+    },
+    {
+      "case_id": "BraTS-GLI-00246-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.775553705054335e-05,
+      "max_softmax_class3": 0.0010901109781116247
+    },
+    {
+      "case_id": "BraTS-GLI-00247-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 5.6515469623263925e-05,
+      "max_softmax_class3": 0.008363948203623295
+    },
+    {
+      "case_id": "BraTS-GLI-00249-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.282169927842915e-05,
+      "max_softmax_class3": 0.0013369551161304116
+    },
+    {
+      "case_id": "BraTS-GLI-00250-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 5.052335836808197e-05,
+      "max_softmax_class3": 0.002448920626193285
+    },
+    {
+      "case_id": "BraTS-GLI-00251-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.217942139599472e-05,
+      "max_softmax_class3": 0.0012842677533626556
+    },
+    {
+      "case_id": "BraTS-GLI-00253-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.608951374189928e-05,
+      "max_softmax_class3": 0.0014461965765804052
+    },
+    {
+      "case_id": "BraTS-GLI-00254-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.3806889405241236e-05,
+      "max_softmax_class3": 0.0016705270390957594
+    },
+    {
+      "case_id": "BraTS-GLI-00258-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.459311821847223e-05,
+      "max_softmax_class3": 0.0015959293814375997
+    },
+    {
+      "case_id": "BraTS-GLI-00259-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.873536843457259e-05,
+      "max_softmax_class3": 0.0015605520457029343
+    },
+    {
+      "case_id": "BraTS-GLI-00260-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.752753011416644e-05,
+      "max_softmax_class3": 0.0028699482791125774
+    },
+    {
+      "case_id": "BraTS-GLI-00261-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.871486842399463e-05,
+      "max_softmax_class3": 0.0011332823196426034
+    },
+    {
+      "case_id": "BraTS-GLI-00262-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.217959940433502e-05,
+      "max_softmax_class3": 0.0015249416464939713
+    },
+    {
+      "case_id": "BraTS-GLI-00263-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 2.5602710593375377e-05,
+      "max_softmax_class3": 0.001074683852493763
+    },
+    {
+      "case_id": "BraTS-GLI-00266-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 4.550916128209792e-05,
+      "max_softmax_class3": 0.0019012030679732561
+    },
+    {
+      "case_id": "BraTS-GLI-00267-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.062147879973054e-05,
+      "max_softmax_class3": 0.0012249363353475928
+    },
+    {
+      "case_id": "BraTS-GLI-00269-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 3.5196528187952936e-05,
+      "max_softmax_class3": 0.0011216270504519343
+    },
+    {
+      "case_id": "BraTS-GLI-00270-000",
+      "gt_has_et": false,
+      "pred_has_et": false,
+      "gt_et_voxels": 0,
+      "pred_et_voxels": 0,
+      "et_dice": 1.0,
+      "et_dice_raw_no_empty_rule": 1.0,
+      "empty_empty_rule_applied": true,
+      "pred_unique_classes": [
+        0,
+        1,
+        2
+      ],
+      "mean_softmax_class3": 5.284815779305063e-05,
+      "max_softmax_class3": 0.0034710250329226255
+    }
+  ],
+  "label_mapping_spotcheck": {
+    "cases_checked": 20,
+    "cases_with_raw_label_4": 0,
+    "cases_with_remapped_class_3": 0,
+    "rows": [
+      {
+        "case_id": "BraTS-GLI-00241-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00242-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00243-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00246-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00247-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00249-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00250-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00251-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00253-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00254-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00258-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00259-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00260-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00261-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00262-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00263-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00266-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00267-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00269-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      },
+      {
+        "case_id": "BraTS-GLI-00270-000",
+        "raw_label_4_voxels": 0,
+        "remapped_class_3_voxels": 0,
+        "remap_from_raw_class_3": 0
+      }
+    ]
+  },
+  "root_cause": {
+    "summary": "BraTS-GLI segs use labels {0,1,2,3} where 3=ET. Remap only maps 4->3, so raw ET (3) is zeroed to background.",
+    "raw_labels_in_dataset": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "classic_brats_assumed_by_remap": [
+      0,
+      1,
+      2,
+      4
+    ],
+    "effect": "GT class-3 never exists after remap; model never learns ET; empty/empty rule sets ET Dice=1.0",
+    "also_affects": "WT and TC are undercounted because true ET voxels become background"
+  },
+  "paper_warning": "Do NOT report ET Dice=1.0 or mean Dice=0.793 as genuine ET performance without label-fix re-evaluation.",
+  "epoch64_mean_without_et": 0.6897810270776972
+}

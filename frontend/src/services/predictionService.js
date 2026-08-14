@@ -131,6 +131,104 @@ export const predictionService = {
       }
     }
   },
+
+  /**
+   * Calculate volume and dimensions for specific tumor classes
+   * @param {string} maskPath - Relative path to the original mask
+   * @param {Array<number>} classes - Array of class IDs to analyze (e.g., [1, 2, 3])
+   * @returns {Promise<Object>} API response with volume_cm3 and dimensions_mm
+   */
+  async getClassAnalysis(maskPath, classes) {
+    try {
+      const response = await api.post('/predict/class-analysis', {
+        mask_path: maskPath,
+        classes,
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        throw {
+          status: error.response.status,
+          message: error.response.data.detail || 'Class analysis failed',
+        };
+      } else if (error.request) {
+        throw {
+          status: 0,
+          message: 'Network error - unable to connect to server',
+        };
+      } else {
+        throw {
+          status: 0,
+          message: error.message || 'Class analysis request failed',
+        };
+      }
+    }
+  },
+
+  /**
+   * Calculate volume and dimensions for each individual tumor class
+   * @param {string} maskPath - Relative path to the original mask
+   * @returns {Promise<Object>} API response with individual class analysis
+   */
+  async getIndividualClassAnalysis(maskPath) {
+    try {
+      const response = await api.post('/predict/individual-class-analysis', {
+        mask_path: maskPath,
+        classes: [],
+      });
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        throw {
+          status: error.response.status,
+          message: error.response.data.detail || 'Individual class analysis failed',
+        };
+      } else if (error.request) {
+        throw {
+          status: 0,
+          message: 'Network error - unable to connect to server',
+        };
+      } else {
+        throw {
+          status: 0,
+          message: error.message || 'Individual class analysis request failed',
+        };
+      }
+    }
+  },
+
+  async getMethodsSummary() {
+    const response = await api.get('/research/methods');
+    return response.data;
+  },
+
+  async getModelInfo(checkpointPath) {
+    const response = await api.get('/research/model-info', {
+      params: checkpointPath ? { checkpoint_path: checkpointPath } : {},
+    });
+    return response.data;
+  },
+
+  async validateCase(predictionMaskPath, groundTruthMaskPath) {
+    try {
+      const response = await api.post('/predict/validate-case', {
+        prediction_mask_path: predictionMaskPath,
+        ground_truth_mask_path: groundTruthMaskPath,
+      });
+      console.log('[VALIDATION] API RESPONSE:', response.data);
+      return response.data.validation;
+    } catch (error) {
+      if (error.response) {
+        throw {
+          status: error.response.status,
+          message: error.response.data.detail || 'Validation failed',
+          response: error.response,
+          data: error.response.data,
+        };
+      }
+      throw error;
+    }
+  },
 };
 
 export default predictionService;

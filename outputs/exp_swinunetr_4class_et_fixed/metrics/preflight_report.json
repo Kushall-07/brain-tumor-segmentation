@@ -1,0 +1,133 @@
+{
+  "preflight_check": {
+    "total_checks": 24,
+    "passed": 24,
+    "failed": 0,
+    "overall_status": "READY"
+  },
+  "checks": {
+    "dataset_exists": {
+      "status": "PASS",
+      "details": "Data root: C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\BraTS"
+    },
+    "training_dir_exists": {
+      "status": "PASS",
+      "details": "Training: C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\BraTS\\Training"
+    },
+    "validation_dir_exists": {
+      "status": "PASS",
+      "details": "Validation: C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\BraTS\\Validation"
+    },
+    "modalities_valid": {
+      "status": "PASS",
+      "details": "4 modalities loaded: torch.Size([4, 155, 240, 240])"
+    },
+    "raw_labels_contain_et": {
+      "status": "PASS",
+      "details": "ET label 3 found in raw data"
+    },
+    "remapping_preserves_et": {
+      "status": "PASS",
+      "details": "ET preserved: 1 -> 1 voxels"
+    },
+    "num_classes_valid": {
+      "status": "PASS",
+      "details": "NUM_CLASSES = 4"
+    },
+    "model_out_channels_valid": {
+      "status": "PASS",
+      "details": "Model out_channels = 4"
+    },
+    "train_label_contains_et": {
+      "status": "PASS",
+      "details": "Training label contains class 3: [np.int64(0), np.int64(1), np.int64(2), np.int64(3)]"
+    },
+    "val_label_contains_et": {
+      "status": "PASS",
+      "details": "Validation label contains class 3: [np.int64(0), np.int64(1), np.int64(2), np.int64(3)]"
+    },
+    "tumor_centered_sampling_active": {
+      "status": "PASS",
+      "details": "RandCropByPosNegLabeld found in transforms"
+    },
+    "training_patch_et_valid": {
+      "status": "PASS",
+      "details": "Training patch contains class 3: [np.int64(0), np.int64(1), np.int64(2), np.int64(3)]"
+    },
+    "ce_class_weights_length": {
+      "status": "PASS",
+      "details": "CE_CLASS_WEIGHTS length = 4"
+    },
+    "loss_accepts_four_weights": {
+      "status": "PASS",
+      "details": "Loss forward pass successful with 4 classes"
+    },
+    "validation_metric_recognizes_et": {
+      "status": "PASS",
+      "details": "Metric computes ET score: 0.2527"
+    },
+    "wt_definition_correct": {
+      "status": "PASS",
+      "details": "WT = labels {1,2,3}"
+    },
+    "tc_definition_correct": {
+      "status": "PASS",
+      "details": "TC = labels {1,3}"
+    },
+    "et_definition_correct": {
+      "status": "PASS",
+      "details": "ET = label {3}"
+    },
+    "no_et_conversion": {
+      "status": "PASS",
+      "details": "ET voxels preserved in actual data"
+    },
+    "model_forward_shape_valid": {
+      "status": "PASS",
+      "details": "Model output shape: torch.Size([1, 4, 96, 96, 96])"
+    },
+    "loss_forward_backward_valid": {
+      "status": "PASS",
+      "details": "Loss forward/backward successful"
+    },
+    "vram_basic_check": {
+      "status": "PASS",
+      "details": "VRAM: allocated=0.13GB, reserved=1.63GB"
+    },
+    "old_experiment_protected": {
+      "status": "PASS",
+      "details": "Previous experiment exists: C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\brain-tumor-segmentation\\outputs\\exp_swinunetr_4class_final"
+    },
+    "new_experiment_ready": {
+      "status": "PASS",
+      "details": "New experiment directory: C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\brain-tumor-segmentation\\outputs\\exp_swinunetr_4class_et_fixed"
+    }
+  },
+  "configuration": {
+    "model_name": "swinunetr",
+    "num_classes": 4,
+    "input_channels": 4,
+    "patch_size": [
+      96,
+      96,
+      96
+    ],
+    "train_num_samples": 2,
+    "accumulation_steps": 4,
+    "use_mixed_precision": true,
+    "use_ema": true,
+    "ema_device": "cpu",
+    "ce_class_weights": [
+      0.1,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "learning_rate": 0.0001,
+    "num_epochs": 75,
+    "scheduler": "onecycle",
+    "swin_feature_size": 24,
+    "swin_use_checkpoint": true,
+    "use_pretrained_swin": false
+  }
+}

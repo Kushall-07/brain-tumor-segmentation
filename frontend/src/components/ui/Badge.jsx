@@ -7,22 +7,23 @@ export default function Badge({
   className = '',
 }) {
   const variants = {
-    default: 'bg-slate-800 text-slate-300 border border-slate-700',
-    cyan: 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30',
-    blue: 'bg-blue-500/10 text-blue-300 border border-blue-500/30',
-    green: 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30',
-    red: 'bg-red-500/10 text-red-300 border border-red-500/30',
+    default: 'bg-parchment-dark text-ink-label border border-sepia-border',
+    cyan: 'bg-parchment-dark text-annotation border border-sepia-border',
+    blue: 'bg-parchment-dark text-annotation border border-sepia-border',
+    green: 'bg-parchment-dark text-annotation border border-sepia-border',
+    red: 'bg-parchment-dark text-arterial border border-sepia-border',
+    brass: 'bg-parchment-dark text-brass border border-brass/40',
   };
 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider',
+        'inline-flex items-center gap-1.5 px-3 py-1 rounded-sm text-xs font-medium uppercase tracking-[0.1em]',
         variants[variant],
         className
       )}
     >
-      {Icon && <Icon size={14} />}
+      {Icon && <Icon size={14} strokeWidth={1.5} />}
       {children}
     </span>
   );

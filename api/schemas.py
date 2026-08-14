@@ -10,6 +10,7 @@ MODALITY_T1 = "t1"
 MODALITY_T1CE = "t1ce"
 MODALITY_T2 = "t2"
 MODALITY_FLAIR = "flair"
+MODALITY_SEG = "seg"
 
 # Valid file extensions
 VALID_EXTENSIONS = {".nii", ".nii.gz"}
@@ -40,3 +41,13 @@ class PredictResponse(BaseModel):
 class PredictUploadResponse(BaseModel):
     status: str
     result: dict
+
+
+class ClassAnalysisRequest(BaseModel):
+    mask_path: str
+    classes: set[int] = set()
+
+
+class ValidationMetricsRequest(BaseModel):
+    prediction_mask_path: str
+    ground_truth_mask_path: str

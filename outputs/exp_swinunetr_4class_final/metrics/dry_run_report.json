@@ -1,0 +1,97 @@
+{
+  "blockers": [],
+  "config": {
+    "ACCUMULATION_STEPS": 4,
+    "CE_CLASS_WEIGHTS": [
+      0.1,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "FREEZE_ENCODER_EPOCHS": 30,
+    "MODEL_NAME": "swinunetr",
+    "NUM_CLASSES": 4,
+    "PATCH_SIZE": [
+      96,
+      96,
+      96
+    ],
+    "SCHEDULER": "onecycle",
+    "USE_EMA": true,
+    "USE_PRETRAINED_SWIN": true,
+    "deep_supervision": "NOT IMPLEMENTED / FUTURE EXPERIMENT"
+  },
+  "dataset_counts": {
+    "test": 30,
+    "train": 200,
+    "val": 20
+  },
+  "results": {
+    "checkpoint_ok": true,
+    "checks": {},
+    "device": "cuda",
+    "label_mapping_ok": true,
+    "max_vram_gb": 6.61554479598999,
+    "pretrained": {
+      "loaded_keys": 0,
+      "message": "Pretrained weights loaded: NO | Loaded keys: 0 | Skipped keys: 268 | Missing in model after load: 159",
+      "missing_in_checkpoint": 157,
+      "pretrained_weights_loaded": "NO",
+      "skipped_keys": 268,
+      "skipped_names_sample": [
+        "patch_embed.proj.weight (not in model)",
+        "module.patch_embed.proj.weight (not in model)",
+        "patch_embed.proj.bias (not in model)",
+        "module.patch_embed.proj.bias (not in model)",
+        "layers1.0.blocks.0.norm1.weight (not in model)",
+        "module.layers1.0.blocks.0.norm1.weight (not in model)",
+        "layers1.0.blocks.0.norm1.bias (not in model)",
+        "module.layers1.0.blocks.0.norm1.bias (not in model)",
+        "layers1.0.blocks.0.attn.relative_position_bias_table (not in model)",
+        "module.layers1.0.blocks.0.attn.relative_position_bias_table (not in model)",
+        "layers1.0.blocks.0.attn.relative_position_index (not in model)",
+        "module.layers1.0.blocks.0.attn.relative_position_index (not in model)",
+        "layers1.0.blocks.0.attn.qkv.weight (not in model)",
+        "module.layers1.0.blocks.0.attn.qkv.weight (not in model)",
+        "layers1.0.blocks.0.attn.qkv.bias (not in model)",
+        "module.layers1.0.blocks.0.attn.qkv.bias (not in model)",
+        "layers1.0.blocks.0.attn.proj.weight (not in model)",
+        "module.layers1.0.blocks.0.attn.proj.weight (not in model)",
+        "layers1.0.blocks.0.attn.proj.bias (not in model)",
+        "module.layers1.0.blocks.0.attn.proj.bias (not in model)",
+        "layers1.0.blocks.0.norm2.weight (not in model)",
+        "module.layers1.0.blocks.0.norm2.weight (not in model)",
+        "layers1.0.blocks.0.norm2.bias (not in model)",
+        "module.layers1.0.blocks.0.norm2.bias (not in model)",
+        "layers1.0.blocks.0.mlp.fc1.weight (not in model)",
+        "module.layers1.0.blocks.0.mlp.fc1.weight (not in model)",
+        "layers1.0.blocks.0.mlp.fc1.bias (not in model)",
+        "module.layers1.0.blocks.0.mlp.fc1.bias (not in model)",
+        "layers1.0.blocks.0.mlp.fc2.weight (not in model)",
+        "module.layers1.0.blocks.0.mlp.fc2.weight (not in model)",
+        "layers1.0.blocks.0.mlp.fc2.bias (not in model)",
+        "module.layers1.0.blocks.0.mlp.fc2.bias (not in model)",
+        "layers1.0.blocks.1.norm1.weight (not in model)",
+        "module.layers1.0.blocks.1.norm1.weight (not in model)",
+        "layers1.0.blocks.1.norm1.bias (not in model)",
+        "module.layers1.0.blocks.1.norm1.bias (not in model)",
+        "layers1.0.blocks.1.attn.relative_position_bias_table (not in model)",
+        "module.layers1.0.blocks.1.attn.relative_position_bias_table (not in model)",
+        "layers1.0.blocks.1.attn.relative_position_index (not in model)",
+        "module.layers1.0.blocks.1.attn.relative_position_index (not in model)"
+      ]
+    },
+    "sample_labels": [
+      0,
+      1,
+      2
+    ],
+    "val_scores": {
+      "et": 4.372654984763358e-06,
+      "mean": 0.002992092265837224,
+      "tc": 0.00020558826508931816,
+      "wt": 0.008766315877437592
+    }
+  },
+  "safe_to_start_training": true
+}

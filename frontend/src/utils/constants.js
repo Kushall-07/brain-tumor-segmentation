@@ -58,17 +58,17 @@ export const TUMOR_CLASSES = [
   {
     id: 1,
     name: 'Enhancing Tumor (ET)',
-    color: 'from-red-500 to-pink-500',
+    color: 'bg-red-700',
   },
   {
     id: 2,
     name: 'Tumor Core (TC)',
-    color: 'from-yellow-500 to-orange-500',
+    color: 'bg-brass',
   },
   {
     id: 3,
     name: 'Whole Tumor (WT)',
-    color: 'from-green-500 to-emerald-500',
+    color: 'bg-green-700',
   },
 ];
 

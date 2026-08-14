@@ -3,19 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { Brain, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import UploadCard from '../components/UploadCard';
 import predictionService from '../services/predictionService';
+import { setPendingUploadFiles } from '../utils/pendingUpload';
 
 const MODALITIES = ['t1', 't1ce', 't2', 'flair'];
 
 const PredictPage = () => {
   const navigate = useNavigate();
-  
+
   const [files, setFiles] = useState({
     t1: null,
     t1ce: null,
     t2: null,
     flair: null,
+    seg: null,
   });
-  
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
@@ -47,7 +49,6 @@ const PredictPage = () => {
     const newErrors = {};
     let hasError = false;
 
-    // Check if all modalities are selected
     MODALITIES.forEach(modality => {
       if (!files[modality]) {
         newErrors[modality] = `${modality.toUpperCase()} is required`;
@@ -55,7 +56,6 @@ const PredictPage = () => {
       }
     });
 
-    // Check for duplicate files
     const fileHashes = new Map();
     MODALITIES.forEach(modality => {
       if (files[modality]) {
@@ -85,11 +85,12 @@ const PredictPage = () => {
     setApiError(null);
     setUploadStatus('Preparing files...');
 
-    // Navigate to processing page with files for the real API call
-    navigate('/processing', { 
-      state: { 
-        files: files 
-      } 
+    setPendingUploadFiles(files);
+
+    navigate('/processing', {
+      state: {
+        files,
+      },
     });
   };
 
@@ -117,22 +118,20 @@ const PredictPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-parchment py-12 px-4 sm:px-6 lg:px-8 pt-28">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center mb-4">
-            <Brain className="text-indigo-600" size={48} />
+            <Brain className="text-arterial" size={40} strokeWidth={1.5} />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="font-serif text-3xl font-semibold text-ink mb-2">
             Brain Tumor Segmentation
           </h1>
-          <p className="text-gray-600">
+          <p className="text-ink-body">
             Upload MRI modalities for AI-powered tumor segmentation
           </p>
         </div>
 
-        {/* Upload Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {MODALITIES.map(modality => (
             <UploadCard
@@ -147,14 +146,32 @@ const PredictPage = () => {
           ))}
         </div>
 
-        {/* Validation Error Summary */}
+        {/* Optional Ground Truth */}
+        <div className="mb-8">
+          <p className="atlas-label mb-3 text-center">Optional — Ground Truth Segmentation</p>
+          <div className="max-w-xs mx-auto">
+            <UploadCard
+              modality="seg"
+              selectedFile={files.seg}
+              onFileSelect={(file) => handleFileSelect('seg', file)}
+              onRemove={() => handleFileRemove('seg')}
+              disabled={isSubmitting}
+              error={errors.seg}
+            />
+          </div>
+          <p className="text-xs text-sepia-muted text-center mt-2 max-w-md mx-auto">
+            Provide a labeled BraTS-format segmentation mask to enable validation metrics and
+            ground-truth comparison on the Results page.
+          </p>
+        </div>
+
         {hasErrors && !isSubmitting && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-6 p-4 bg-parchment-dark border border-arterial/30 rounded-sm">
             <div className="flex items-start">
-              <AlertCircle className="text-red-500 mt-0.5 mr-2" size={20} />
+              <AlertCircle className="text-arterial mt-0.5 mr-2 flex-shrink-0" size={20} />
               <div>
-                <p className="font-medium text-red-800">Please fix the following errors:</p>
-                <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
+                <p className="font-medium text-arterial">Please fix the following errors:</p>
+                <ul className="mt-2 text-sm text-sepia-muted list-disc list-inside">
                   {visibleErrors.map(([modality, error]) => (
                     <li key={modality}>{error}</li>
                   ))}
@@ -164,41 +181,38 @@ const PredictPage = () => {
           </div>
         )}
 
-        {/* API Error */}
         {apiError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-6 p-4 bg-parchment-dark border border-arterial/30 rounded-sm">
             <div className="flex items-start">
-              <AlertCircle className="text-red-500 mt-0.5 mr-2" size={20} />
+              <AlertCircle className="text-arterial mt-0.5 mr-2 flex-shrink-0" size={20} />
               <div>
-                <p className="font-medium text-red-800">
+                <p className="font-medium text-arterial">
                   {getErrorMessage(apiError.status)}
                 </p>
-                <p className="mt-1 text-sm text-red-700">{apiError.message}</p>
+                <p className="mt-1 text-sm text-sepia-muted">{apiError.message}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Loading Status */}
         {isSubmitting && (
-          <div className="mb-6 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div className="mb-6 p-6 bg-parchment-dark border border-sepia-border rounded-sm">
             <div className="flex items-center justify-center space-x-3">
-              <Loader2 className="animate-spin text-indigo-600" size={24} />
-              <p className="text-gray-700 font-medium">{uploadStatus}</p>
+              <Loader2 className="animate-spin text-annotation" size={24} />
+              <p className="text-ink font-medium">{uploadStatus}</p>
             </div>
           </div>
         )}
 
-        {/* Predict Button */}
         <div className="flex justify-center">
           <button
             onClick={handleSubmit}
             disabled={!allFilesSelected || isSubmitting}
             className={`
-              px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200
+              px-8 py-3 rounded-sm font-medium transition-colors duration-200
               ${allFilesSelected && !isSubmitting
-                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg'
-                : 'bg-gray-400 cursor-not-allowed'
+                ? 'bg-arterial hover:bg-arterial-light text-parchment'
+                : 'bg-sepia-border text-sepia-muted cursor-not-allowed'
               }
               ${isSubmitting ? 'opacity-75' : ''}
             `}
@@ -210,21 +224,20 @@ const PredictPage = () => {
               </span>
             ) : (
               <span className="flex items-center space-x-2">
-                <CheckCircle size={20} />
+                <CheckCircle size={20} strokeWidth={1.5} />
                 <span>Run Segmentation</span>
               </span>
             )}
           </button>
         </div>
 
-        {/* Info Card */}
-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-8 p-4 bg-parchment-dark border border-sepia-border rounded-sm">
           <div className="flex items-start">
-            <CheckCircle className="text-blue-500 mt-0.5 mr-2" size={20} />
-            <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Supported file formats:</p>
-              <p>.nii (uncompressed) and .nii.gz (compressed)</p>
-              <p className="mt-2 font-medium mb-1">Required modalities:</p>
+            <CheckCircle className="text-annotation mt-0.5 mr-2 flex-shrink-0" size={20} strokeWidth={1.5} />
+            <div className="text-sm text-ink-body">
+              <p className="font-medium text-ink mb-1">Supported file formats:</p>
+              <p className="font-mono text-xs">.nii (uncompressed) and .nii.gz (compressed)</p>
+              <p className="mt-2 font-medium text-ink mb-1">Required modalities:</p>
               <p>T1, T1ce, T2, and FLAIR MRI scans</p>
             </div>
           </div>

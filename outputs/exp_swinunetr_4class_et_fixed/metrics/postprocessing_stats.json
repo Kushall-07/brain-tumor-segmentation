@@ -1,0 +1,25 @@
+{
+  "raw": {
+    "wt_dice_mean": 0.8400198817253113,
+    "wt_dice_std": 0.11052687163856,
+    "tc_dice_mean": 0.8932326257228851,
+    "tc_dice_std": 0.10875336255355568,
+    "et_dice_mean": 0.8841238051652909,
+    "et_dice_std": 0.09126530412939321,
+    "mean_dice_mean": 0.8724587708711624,
+    "mean_dice_std": 0.08948207389766823
+  },
+  "cleaned": {
+    "wt_dice_mean": 0.8487738266587257,
+    "wt_dice_std": 0.12734744807387724,
+    "tc_dice_mean": 0.9066265195608139,
+    "tc_dice_std": 0.1215149649393857,
+    "et_dice_mean": 0.8961080819368362,
+    "et_dice_std": 0.10601106455944344,
+    "mean_dice_mean": 0.883836142718792,
+    "mean_dice_std": 0.10306145548273174
+  },
+  "total_removed_voxels": 70022,
+  "total_removed_in_gt": 14965,
+  "total_removed_in_correct_class": 9660
+}

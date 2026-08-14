@@ -1,0 +1,89 @@
+{
+  "ce_class_weights": [
+    0.1,
+    1.0,
+    2.0,
+    4.0
+  ],
+  "class_mapping": {
+    "0": "background",
+    "1": "NCR/NET",
+    "2": "edema",
+    "3": "ET"
+  },
+  "deep_supervision": "NOT IMPLEMENTED / FUTURE EXPERIMENT",
+  "ema": {
+    "decay": 0.999,
+    "device": "cpu",
+    "enabled": true
+  },
+  "exp_name": "exp_swinunetr_4class_final",
+  "freeze_encoder_active": false,
+  "freeze_encoder_epochs": 0,
+  "freeze_encoder_requested": 30,
+  "loss": {
+    "ce_class_weights": [
+      0.1,
+      1.0,
+      2.0,
+      4.0
+    ],
+    "focal_gamma": 2.0,
+    "type": "DiceCrossEntropyLoss",
+    "use_focal_loss": false
+  },
+  "model": {
+    "deep_supervision": "NOT IMPLEMENTED / FUTURE EXPERIMENT",
+    "model_name": "swinunetr",
+    "swin_feature_size": 24,
+    "swin_use_checkpoint": true
+  },
+  "num_classes": 4,
+  "optimizer": {
+    "type": "AdamW",
+    "weight_decay": 0.01
+  },
+  "pretrained": false,
+  "scheduler": {
+    "max_lr": 0.001,
+    "steps_per_epoch": 50,
+    "type": "onecycle"
+  },
+  "training": {
+    "accumulation_steps": 4,
+    "batch_size": 1,
+    "crop_neg": 1,
+    "crop_pos": 3,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true,
+    "device": "cuda",
+    "effective_batch_size": 4,
+    "epochs": 75,
+    "learning_rate": 0.0001,
+    "mixed_precision": true,
+    "patch_size": [
+      96,
+      96,
+      96
+    ],
+    "seed": 42,
+    "train_dir": "C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\BraTS\\Training",
+    "train_num_samples": 2,
+    "val_dir": "C:\\Users\\loq\\OneDrive\\Desktop\\KP\\BrainTumorSegmentation\\BraTS\\Validation"
+  },
+  "use_deep_supervision": false,
+  "validation": {
+    "overlap": 0.5,
+    "roi": [
+      96,
+      96,
+      96
+    ],
+    "sw_batch_size": 1,
+    "tta_during_training": false
+  },
+  "vram": {
+    "ema_device": "cpu",
+    "log_vram": true
+  }
+}
