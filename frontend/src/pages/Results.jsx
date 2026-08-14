@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { CheckCircle, Download, ArrowLeft, FileText, AlertCircle, Activity } from 'lucide-react';
 import predictionService from '../services/predictionService';
 import NiiVueViewer from '../components/NiiVueViewer';
-import ClinicalDisclaimer from '../components/research/ClinicalDisclaimer';
 
 export default function Results() {
   const navigate = useNavigate();
@@ -152,9 +151,6 @@ export default function Results() {
           <p className="text-sepia-muted text-lg mb-4">
             Case ID: <span className="font-mono text-ink-mono">{result.case_id}</span>
           </p>
-          <div className="max-w-2xl mx-auto">
-            <ClinicalDisclaimer />
-          </div>
         </div>
 
         {/* Prediction Details (compact) */}
