@@ -6,12 +6,11 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <NavLink to="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 border border-brass flex items-center justify-center rounded-sm">
-              <svg className="w-5 h-5 text-arterial" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" />
-              </svg>
-            </div>
+            <img
+              src="/brain-tumor-ai-fig1.png"
+              alt="Brain tumor logo"
+              className="w-16 h-16 object-contain opacity-80"
+            />
             <div className="leading-tight">
               <span className="block font-serif text-sm font-semibold text-ink tracking-wide uppercase">
                 Brain Tumor
