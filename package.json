@@ -1,0 +1,13 @@
+{
+  "name": "brain-tumor-segmentation",
+  "version": "1.0.0",
+  "description": "Brain Tumor Segmentation with FastAPI backend and React frontend",
+  "scripts": {
+    "dev": "concurrently \"venv\\Scripts\\python.exe -m uvicorn api.main:app --reload\" \"cd frontend && npm run dev\"",
+    "backend": "venv\\Scripts\\python.exe -m uvicorn api.main:app --reload",
+    "frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
