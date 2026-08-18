@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import shutil
 import uuid
 from datetime import datetime
@@ -12,6 +13,8 @@ import numpy as np
 from fastapi import UploadFile
 
 from api.schemas import ModalityPaths
+
+logger = logging.getLogger(__name__)
 
 
 def create_upload_session(base_dir: Union[str, Path] = "uploads") -> Path:
@@ -146,16 +149,28 @@ def save_modalities(
 
 
 def save_ground_truth(seg: UploadFile, patient_folder: Path) -> Path:
-    """Save optional ground-truth segmentation mask."""
+    """Save optional ground-truth segmentation mask, preserving original file format."""
     filename = seg.filename or "seg.nii.gz"
     fn_lower = filename.lower()
+    
+    # Preserve the original file extension
     if fn_lower.endswith(".nii.gz"):
         ext = ".nii.gz"
     elif fn_lower.endswith(".nii"):
         ext = ".nii"
     else:
+        # Unknown format, default to .nii.gz but warn
         ext = ".nii.gz"
-    return save_uploaded_file(seg, patient_folder / f"seg{ext}")
+        logger.warning(f"Unknown ground-truth file extension: {filename}, defaulting to .nii.gz")
+    
+    saved_path = save_uploaded_file(seg, patient_folder / f"seg{ext}")
+    
+    # Log what was saved
+    logger.info(f"[GT] Uploaded filename: {filename}")
+    logger.info(f"[GT] Saved path: {saved_path.as_posix()}")
+    logger.info(f"[GT] Detected/expected format: {ext}")
+    
+    return saved_path
 
 
 def calculate_tumor_volume(mask_path: Union[str, Path]) -> dict[str, float | int | list[float]]:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import traceback
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -61,10 +61,30 @@ def _load_internal_volume(path: Path) -> tuple[nib.Nifti1Image, np.ndarray, tupl
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-    img = nib.as_closest_canonical(nib.load(str(path)))
-    array = _load_nii(path)
-    spacing = _spacing_for_transposed_volume(img)
-    return img, array, spacing
+    try:
+        img = nib.as_closest_canonical(nib.load(str(path)))
+        array = _load_nii(path)
+        spacing = _spacing_for_transposed_volume(img)
+        return img, array, spacing
+    except nib.imagefuncs.ImageFileError as e:
+        # If the file is named .nii.gz but is actually uncompressed, try loading as .nii
+        if str(path).endswith('.nii.gz'):
+            _validation_print(f"[VALIDATION] Failed to load as .nii.gz, trying as .nii: {path}")
+            # Try loading without gzip
+            uncompressed_path = Path(str(path).replace('.nii.gz', '.nii'))
+            if uncompressed_path.exists():
+                _validation_print(f"[VALIDATION] Loading uncompressed version: {uncompressed_path}")
+                img = nib.as_closest_canonical(nib.load(str(uncompressed_path)))
+                array = _load_nii(uncompressed_path)
+                spacing = _spacing_for_transposed_volume(img)
+                return img, array, spacing
+            else:
+                _validation_print(f"[VALIDATION] Uncompressed version not found: {uncompressed_path}")
+                raise
+        else:
+            _validation_print(f"[VALIDATION] Failed to load NIfTI file: {path}")
+            _validation_print(f"[VALIDATION] Error: {str(e)}")
+            raise
 
 
 def _prepare_aligned_label_maps(
@@ -76,9 +96,32 @@ def _prepare_aligned_label_maps(
     _validation_print(f"[VALIDATION] Prediction path: {prediction_path}")
     _validation_print(f"[VALIDATION] Ground truth exists: {ground_truth_path.exists()}")
     _validation_print(f"[VALIDATION] Prediction exists: {prediction_path.exists()}")
+    
+    # Log file details
+    if ground_truth_path.exists():
+        _validation_print(f"[GT] File size: {ground_truth_path.stat().st_size} bytes")
+        _validation_print(f"[GT] File extension: {ground_truth_path.suffix}")
+    if prediction_path.exists():
+        _validation_print(f"[PRED] File size: {prediction_path.stat().st_size} bytes")
+        _validation_print(f"[PRED] File extension: {prediction_path.suffix}")
 
-    pred_img, pred_raw, pred_spacing = _load_internal_volume(prediction_path)
-    gt_img, gt_raw, gt_spacing = _load_internal_volume(ground_truth_path)
+    try:
+        pred_img, pred_raw, pred_spacing = _load_internal_volume(prediction_path)
+        _validation_print(f"[VALIDATION] Prediction loaded successfully")
+        _validation_print(f"[PRED] Shape: {pred_raw.shape}")
+        _validation_print(f"[PRED] Unique labels: {sorted(int(v) for v in np.unique(pred_raw).tolist() if np.isfinite(v))}")
+    except Exception as e:
+        _validation_print(f"[VALIDATION] Failed to load prediction: {str(e)}")
+        raise
+
+    try:
+        gt_img, gt_raw, gt_spacing = _load_internal_volume(ground_truth_path)
+        _validation_print(f"[VALIDATION] Ground truth loaded successfully")
+        _validation_print(f"[GT] Shape: {gt_raw.shape}")
+        _validation_print(f"[GT] Unique labels: {sorted(int(v) for v in np.unique(gt_raw).tolist() if np.isfinite(v))}")
+    except Exception as e:
+        _validation_print(f"[VALIDATION] Failed to load ground truth: {str(e)}")
+        raise
 
     debug: dict[str, Any] = {
         "prediction_path": str(prediction_path),
@@ -290,9 +333,6 @@ def _format_metrics_dict(
             "TC": _region_payload(tc),
             "ET": _region_payload(et),
         },
-        "wt": asdict(wt),
-        "tc": asdict(tc),
-        "et": asdict(et),
     }
     if warnings:
         payload["warnings"] = warnings
@@ -324,7 +364,10 @@ def evaluate_segmentation_masks(
             all_warnings["ET"] = et_warn
 
         result = _format_metrics_dict(wt, tc, et, all_warnings or None)
-        _validation_print(f"[VALIDATION] SUCCESS: {result['metrics']}")
+        _validation_print(f"[VALIDATION] SUCCESS: Metrics computed successfully")
+        _validation_print(f"[VALIDATION] WT Dice: {wt.dice}")
+        _validation_print(f"[VALIDATION] TC Dice: {tc.dice}")
+        _validation_print(f"[VALIDATION] ET Dice: {et.dice}")
         return result
     except Exception as exc:
         _validation_print(f"[VALIDATION] ERROR: {exc!r}")

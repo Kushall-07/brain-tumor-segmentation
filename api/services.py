@@ -10,6 +10,8 @@ from pathlib import Path
 import shutil
 from typing import Any
 
+import nibabel as nib
+
 from api.exceptions import CheckpointError, InferenceError, ValidationError
 from api.jobs import complete_job, create_job, fail_job, update_job
 from api.schemas import MODALITY_FLAIR, MODALITY_T1, MODALITY_T1CE, MODALITY_T2, ModalityPaths
@@ -32,6 +34,18 @@ from utils.segmentation_evaluation import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _validation_print(message: str) -> None:
+    """Always emit validation diagnostics to stdout for backend terminal visibility."""
+    print(message, flush=True)
+    logger.info(message)
+
+
+def _validation_print(message: str) -> None:
+    """Always emit validation diagnostics to stdout for backend terminal visibility."""
+    print(message, flush=True)
+    logger.info(message)
 
 
 def _is_uploaded_file(upload_file) -> bool:
@@ -124,10 +138,16 @@ def _execute_upload_prediction(
     if request_id is None:
         request_id = str(uuid.uuid4())[:8]
 
+    logger.info(f"[{request_id}] START upload inference service")
+    logger.info(f"[{request_id}] Checkpoint path: {checkpoint_path}")
+    logger.info(f"[{request_id}] Upload session: {upload_session}")
+    logger.info(f"[{request_id}] Modality paths: {modality_paths}")
+
     session_created_here = upload_session is None
 
     try:
         logger.info(f"[{request_id}] START upload inference service")
+        logger.info(f"[{request_id}] Checkpoint path: {checkpoint_path}")
 
         # Validate checkpoint exists
         checkpoint_path_obj = Path(checkpoint_path)
@@ -136,6 +156,7 @@ def _execute_upload_prediction(
                 f"Checkpoint file does not exist: {checkpoint_path_obj}",
                 client_message="Checkpoint file not found",
             )
+        logger.info(f"[{request_id}] Checkpoint validation passed")
 
         if upload_session is None or modality_paths is None:
             # Validate uploaded files (extension and size only)
@@ -301,8 +322,22 @@ def _execute_upload_prediction(
         result["comparison_error"] = None
 
         if ground_truth_path is not None and ground_truth_path.exists():
-            gt_copy_path = prediction_dir / "BraTS-Patient_gt.nii.gz"
-            shutil.copy2(ground_truth_path, gt_copy_path)
+            # Detect actual file format and preserve it
+            fn_lower = ground_truth_path.name.lower()
+            if fn_lower.endswith(".nii.gz"):
+                gt_copy_path = prediction_dir / "BraTS-Patient_gt.nii.gz"
+                shutil.copy2(ground_truth_path, gt_copy_path)
+                logger.info("[%s] Ground-truth is .nii.gz, preserving format", request_id)
+            elif fn_lower.endswith(".nii"):
+                gt_copy_path = prediction_dir / "BraTS-Patient_gt.nii"
+                shutil.copy2(ground_truth_path, gt_copy_path)
+                logger.info("[%s] Ground-truth is .nii, preserving format", request_id)
+            else:
+                # Unknown format, default to .nii.gz (may fail if not actually compressed)
+                gt_copy_path = prediction_dir / "BraTS-Patient_gt.nii.gz"
+                shutil.copy2(ground_truth_path, gt_copy_path)
+                logger.warning("[%s] Unknown ground-truth format, defaulting to .nii.gz", request_id)
+            
             result["ground_truth_path"] = gt_copy_path.as_posix()
             result["ground_truth_available"] = True
 
@@ -313,25 +348,31 @@ def _execute_upload_prediction(
             print(f"[VALIDATION] prediction filename: {mask_path.name}", flush=True)
 
             try:
+                _validation_print(f"[VALIDATION] Starting validation for ground truth: {gt_copy_path.name}")
                 validation_result = evaluate_segmentation_masks(mask_path, gt_copy_path)
                 if validation_result.get("available"):
                     result["validation_metrics"] = validation_result
                     logger.info("[%s] Ground-truth validation metrics computed", request_id)
+                    _validation_print(f"[VALIDATION] Metrics computed successfully")
                 else:
-                    result["validation_metrics"] = None
-                    result["validation_error"] = validation_result.get("reason", "Validation failed")
-                    result["validation_error_type"] = validation_result.get("error_type")
-                    logger.warning(
-                        "[%s] Ground-truth metric computation failed: %s (%s)",
-                        request_id,
-                        result["validation_error"],
-                        result.get("validation_error_type"),
-                    )
+                    logger.warning("[%s] Validation returned but no metrics available", request_id)
+                    result["validation_error"] = "Validation completed but no metrics available"
+                    result["validation_error_type"] = "no_metrics"
+            except nib.imagefuncs.ImageFileError as e:
+                logger.error("[%s] Ground-truth NIfTI file error: %s", request_id, str(e))
+                result["validation_error"] = f"Invalid NIfTI file format: {str(e)}"
+                result["validation_error_type"] = "nifti_format_error"
+                _validation_print(f"[VALIDATION] ERROR: Invalid NIfTI file format: {str(e)}")
+            except FileNotFoundError as e:
+                logger.error("[%s] Ground-truth file not found: %s", request_id, str(e))
+                result["validation_error"] = f"File not found: {str(e)}"
+                result["validation_error_type"] = "file_not_found"
+                _validation_print(f"[VALIDATION] ERROR: File not found: {str(e)}")
             except Exception as e:
-                logger.warning("[%s] Ground-truth metric computation failed: %s", request_id, e, exc_info=True)
-                result["validation_metrics"] = None
+                logger.error("[%s] Ground-truth validation failed: %s", request_id, str(e))
                 result["validation_error"] = str(e)
-                result["validation_error_type"] = type(e).__name__
+                result["validation_error_type"] = "validation_error"
+                _validation_print(f"[VALIDATION] ERROR: {str(e)}")
 
             try:
                 comparison_path = prediction_dir / "BraTS-Patient_comparison.nii.gz"
@@ -346,6 +387,7 @@ def _execute_upload_prediction(
             except Exception as e:
                 logger.warning("[%s] Comparison mask generation failed: %s", request_id, e, exc_info=True)
                 result["comparison_error"] = str(e)
+                _validation_print(f"[VALIDATION] Comparison mask generation failed: {str(e)}")
 
         metadata: dict[str, str | float | int | list[float] | dict | None] = {
             "case_id": result.get("case_id"),
@@ -416,6 +458,15 @@ def validate_case_metrics(
     print("[VALIDATION] case validation request", flush=True)
     print(f"[VALIDATION] prediction filename: {pred_resolved.name}", flush=True)
     print(f"[VALIDATION] ground truth filename: {gt_resolved.name}", flush=True)
+    
+    # Log ground truth details
+    if gt_resolved.exists():
+        print(f"[GT] Uploaded filename: {gt_resolved.name}", flush=True)
+        print(f"[GT] Saved path: {gt_resolved.as_posix()}", flush=True)
+        print(f"[GT] File size: {gt_resolved.stat().st_size} bytes", flush=True)
+        print(f"[GT] Detected format: {gt_resolved.suffix}", flush=True)
+    else:
+        print(f"[GT] File not found: {gt_resolved.as_posix()}", flush=True)
 
     return evaluate_segmentation_masks(pred_resolved, gt_resolved)
 
@@ -503,8 +554,11 @@ def _run_prediction_job(
         update_job(job_id, stage=stage, message=message)
 
     request_id = job_id[:8]
+    logger.info(f"[{request_id}] Background job started")
 
     try:
+        logger.info(f"[{request_id}] Starting upload prediction execution")
+        logger.info(f"[{request_id}] Using modality paths: {modality_paths}")
         result = _execute_upload_prediction(
             flair=None,
             t1=None,
@@ -518,12 +572,16 @@ def _run_prediction_job(
             progress_callback=progress_callback,
             request_id=request_id,
         )
+        logger.info(f"[{request_id}] Upload prediction completed successfully")
         complete_job(job_id, result)
     except ValidationError as e:
+        logger.error(f"[{request_id}] Validation error: {str(e)}")
         fail_job(job_id, e.client_message)
     except CheckpointError as e:
+        logger.error(f"[{request_id}] Checkpoint error: {str(e)}")
         fail_job(job_id, e.client_message)
     except InferenceError as e:
+        logger.error(f"[{request_id}] Inference error: {str(e)}")
         fail_job(job_id, e.client_message)
     except Exception as e:
         logger.error(f"[{request_id}] Background job failed: {str(e)}", exc_info=True)
@@ -550,15 +608,23 @@ def start_prediction_job(
     Returns:
         Dictionary with job_id and status for immediate client polling.
     """
+    logger.info("[UPLOAD] Received MRI files for prediction")
+    logger.info(f"[UPLOAD] Checkpoint path: {checkpoint_path}")
+    
     # Validate checkpoint exists before accepting the job
     checkpoint_path_obj = Path(checkpoint_path)
+    logger.info(f"[CHECKPOINT] Checking checkpoint path: {checkpoint_path_obj}")
+    logger.info(f"[CHECKPOINT] Checkpoint exists: {checkpoint_path_obj.exists()}")
+    
     if not checkpoint_path_obj.exists():
         raise CheckpointError(
             f"Checkpoint file does not exist: {checkpoint_path_obj}",
             client_message="Checkpoint file not found",
         )
+    logger.info("[CHECKPOINT] Checkpoint validation passed")
 
     # Basic upload validation (extension, size, duplicates)
+    logger.info("[UPLOAD] Starting upload validation")
     UploadValidator.validate_upload(t1, MODALITY_T1)
     UploadValidator.validate_upload(t1ce, MODALITY_T1CE)
     UploadValidator.validate_upload(t2, MODALITY_T2)
@@ -569,12 +635,17 @@ def start_prediction_job(
         MODALITY_T2: t2,
         MODALITY_FLAIR: flair,
     })
+    logger.info("[UPLOAD] Upload validation completed")
 
     # Persist uploaded files before the request returns
+    logger.info("[UPLOAD] Creating upload session")
     upload_session = create_upload_session()
     patient_folder = upload_session / "BraTS-Patient"
     patient_folder.mkdir(parents=True, exist_ok=True)
+    logger.info(f"[UPLOAD] Patient folder: {patient_folder}")
+    
     modality_paths = save_modalities(t1, t1ce, t2, flair, patient_folder)
+    logger.info("[UPLOAD] Modalities saved successfully")
 
     ground_truth_path: Path | None = None
     if _is_uploaded_file(seg):
@@ -589,6 +660,7 @@ def start_prediction_job(
         logger.info("[GT] No ground-truth segmentation provided with this upload")
 
     job_id = create_job()
+    logger.info(f"[UPLOAD] Created job ID: {job_id}")
 
     thread = threading.Thread(
         target=_run_prediction_job,
@@ -606,6 +678,7 @@ def start_prediction_job(
     thread.start()
 
     logger.info(f"[{job_id[:8]}] Prediction job started: {job_id}")
+    logger.info("[UPLOAD] Returning job response to client")
 
     return {
         "job_id": job_id,

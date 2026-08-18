@@ -1,5 +1,6 @@
 from pathlib import Path
 import logging
+import traceback
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
@@ -69,9 +70,11 @@ def predict(request: PredictRequest):
         )
 
     except Exception as e:
+        logger.exception("[PREDICT] Prediction failed with exception")
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
+            detail=f"Internal server error: {str(e)}",
         )
 
 
@@ -116,9 +119,11 @@ def predict_upload(
         )
 
     except Exception as e:
+        logger.exception("[UPLOAD] Prediction upload failed with exception")
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
+            detail=f"Internal server error: {str(e)}",
         )
 
 

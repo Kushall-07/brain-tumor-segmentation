@@ -14,26 +14,18 @@ function normalizeValidationMetrics(validationMetrics) {
   if (validationMetrics.available === true && validationMetrics.metrics) {
     const { metrics } = validationMetrics;
     return {
-      wt: metrics.WT || metrics.wt,
-      tc: metrics.TC || metrics.tc,
-      et: metrics.ET || metrics.et,
+      wt: metrics.WT,
+      tc: metrics.TC,
+      et: metrics.ET,
     };
   }
 
   if (validationMetrics.metrics) {
     const { metrics } = validationMetrics;
     return {
-      wt: metrics.WT || metrics.wt,
-      tc: metrics.TC || metrics.tc,
-      et: metrics.ET || metrics.et,
-    };
-  }
-
-  if (validationMetrics.wt || validationMetrics.tc || validationMetrics.et) {
-    return {
-      wt: validationMetrics.wt,
-      tc: validationMetrics.tc,
-      et: validationMetrics.et,
+      wt: metrics.WT,
+      tc: metrics.TC,
+      et: metrics.ET,
     };
   }
 
