@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import threading
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -12,9 +11,12 @@ from typing import Any
 
 import nibabel as nib
 
+from api.config import PREDICTIONS_ROOT
 from api.exceptions import CheckpointError, InferenceError, ValidationError
+from api.executor import get_executor
 from api.jobs import complete_job, create_job, fail_job, update_job
 from api.schemas import MODALITY_FLAIR, MODALITY_T1, MODALITY_T1CE, MODALITY_T2, ModalityPaths
+from api.security import UnsafePathError, resolve_within
 from api.utils import (
     cleanup_upload_session,
     create_prediction_dir,
@@ -34,12 +36,6 @@ from utils.segmentation_evaluation import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def _validation_print(message: str) -> None:
-    """Always emit validation diagnostics to stdout for backend terminal visibility."""
-    print(message, flush=True)
-    logger.info(message)
 
 
 def _validation_print(message: str) -> None:
@@ -472,26 +468,23 @@ def validate_case_metrics(
 
 
 def _resolve_prediction_mask_path(mask_path: str | Path) -> Path:
-    """Resolve a mask path to an absolute path within outputs/predictions when possible."""
-    mask_path_obj = Path(mask_path)
-    predictions_dir = Path("outputs/predictions").resolve()
+    """Resolve a mask path to an absolute path within outputs/predictions when possible.
 
-    if mask_path_obj.is_absolute():
-        requested_path = mask_path_obj.resolve()
-    else:
+    Relative inputs may still carry a leading "outputs/predictions/" segment
+    (some callers pass back the full path they were given); that prefix is
+    stripped before resolving so it isn't doubled against PREDICTIONS_ROOT.
+    """
+    mask_path_obj = Path(mask_path)
+
+    if not mask_path_obj.is_absolute():
         normalized = str(mask_path).replace("\\", "/")
         if "outputs/predictions/" in normalized:
-            relative = normalized.split("outputs/predictions/", 1)[1]
-            requested_path = (predictions_dir / relative).resolve()
-        else:
-            requested_path = (predictions_dir / mask_path_obj).resolve()
+            mask_path_obj = Path(normalized.split("outputs/predictions/", 1)[1])
 
     try:
-        requested_path.relative_to(predictions_dir)
-    except ValueError as exc:
-        raise ValueError(
-            f"Mask path is outside predictions directory: {requested_path}"
-        ) from exc
+        requested_path = resolve_within(PREDICTIONS_ROOT, mask_path_obj)
+    except UnsafePathError as exc:
+        raise ValueError(str(exc)) from exc
 
     if not requested_path.exists():
         raise FileNotFoundError(f"Mask file not found: {requested_path}")
@@ -662,22 +655,20 @@ def start_prediction_job(
     job_id = create_job()
     logger.info(f"[UPLOAD] Created job ID: {job_id}")
 
-    thread = threading.Thread(
-        target=_run_prediction_job,
-        args=(
-            job_id,
-            upload_session,
-            modality_paths,
-            checkpoint_path,
-            save_probabilities,
-            ground_truth_path,
-        ),
-        daemon=True,
-        name=f"prediction-job-{job_id[:8]}",
+    # Submitted to a bounded executor (not a raw Thread) so concurrent
+    # uploads queue for a free worker instead of spawning unlimited
+    # inference threads that would compete for the same GPU.
+    get_executor().submit(
+        _run_prediction_job,
+        job_id,
+        upload_session,
+        modality_paths,
+        checkpoint_path,
+        save_probabilities,
+        ground_truth_path,
     )
-    thread.start()
 
-    logger.info(f"[{job_id[:8]}] Prediction job started: {job_id}")
+    logger.info(f"[{job_id[:8]}] Prediction job submitted: {job_id}")
     logger.info("[UPLOAD] Returning job response to client")
 
     return {

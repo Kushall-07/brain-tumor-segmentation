@@ -20,11 +20,32 @@ _lock = threading.Lock()
 # job_id -> job state dict
 _jobs: dict[str, dict[str, Any]] = {}
 
+# How long a finished (completed/failed) job stays visible for polling before
+# it is pruned from memory. This is the only cleanup mechanism for the
+# in-memory store, so it is swept opportunistically on every new job rather
+# than needing a background scheduler.
+JOB_TTL_SECONDS = 60 * 60  # 1 hour
+
+
+def _prune_finished_jobs_locked(ttl_seconds: float = JOB_TTL_SECONDS) -> None:
+    """Remove finished jobs older than `ttl_seconds`. Caller must hold `_lock`."""
+    now = time.time()
+    stale_ids = [
+        job_id
+        for job_id, job in _jobs.items()
+        if job["status"] in ("completed", "failed")
+        and job.get("completed_at") is not None
+        and (now - job["completed_at"]) > ttl_seconds
+    ]
+    for job_id in stale_ids:
+        del _jobs[job_id]
+
 
 def create_job() -> str:
     """Create a new prediction job and return its unique ID."""
     job_id = str(uuid.uuid4())
     with _lock:
+        _prune_finished_jobs_locked()
         _jobs[job_id] = {
             "job_id": job_id,
             "status": "processing",
