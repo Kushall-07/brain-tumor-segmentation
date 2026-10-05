@@ -1,0 +1,5 @@
+# Dev/test-only dependencies (not needed to run the app or train models).
+-r requirements.txt
+
+pytest==9.0.1
+httpx==0.28.1
