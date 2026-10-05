@@ -1,24 +1,21 @@
-from pathlib import Path
 import logging
 import traceback
 
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 
+from api.config import DATA_ROOTS, DEFAULT_CHECKPOINT_PATH, OUTPUTS_ROOT, PREDICTIONS_ROOT
 from api.exceptions import CheckpointError, InferenceError, ValidationError
 from api.jobs import get_job
 from api.research_info import get_methods_summary, get_model_info
 from api.schemas import PredictRequest, ClassAnalysisRequest, ValidationMetricsRequest
+from api.security import UnsafePathError, resolve_within, resolve_within_any
 from api.services import predict_case_service, start_prediction_job, validate_case_metrics
 from api.utils import calculate_class_analysis, calculate_individual_class_analysis
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# Predictions directory for secure file serving
-PREDICTIONS_DIR = Path("outputs/predictions")
 
 
 @router.get("/")
@@ -37,11 +34,25 @@ def health():
 
 @router.post("/predict")
 def predict(request: PredictRequest):
+    # These paths come straight from the request body, so they must be
+    # confined to known-safe directories before touching the filesystem or
+    # loading a checkpoint with torch.load — never pass raw client input
+    # to either.
+    try:
+        data_dir = resolve_within_any(DATA_ROOTS, request.data_dir)
+        output_dir = resolve_within(OUTPUTS_ROOT, request.output_dir)
+        checkpoint_path = resolve_within(OUTPUTS_ROOT, request.checkpoint_path)
+    except UnsafePathError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
     try:
         result = predict_case_service(
-            data_dir=request.data_dir,
-            checkpoint_path=request.checkpoint_path,
-            output_dir=request.output_dir,
+            data_dir=data_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=output_dir,
             case_index=request.case_index,
             save_probabilities=request.save_probabilities,
         )
@@ -85,10 +96,13 @@ def predict_upload(
     t1ce: UploadFile = File(...),
     t2: UploadFile = File(...),
     seg: UploadFile | None = File(default=None),
-    checkpoint_path: str = Query(...),
     save_probabilities: bool = Query(default=False),
 ):
-    """Start an asynchronous prediction job and return a job_id for polling."""
+    """Start an asynchronous prediction job and return a job_id for polling.
+
+    The checkpoint is a server-side deployment decision (DEFAULT_CHECKPOINT_PATH)
+    and is intentionally not a client-supplied parameter.
+    """
     try:
         logger.info(
             "[GT] Ground truth upload received: %s",
@@ -99,7 +113,7 @@ def predict_upload(
             t1=t1,
             t1ce=t1ce,
             t2=t2,
-            checkpoint_path=checkpoint_path,
+            checkpoint_path=DEFAULT_CHECKPOINT_PATH,
             save_probabilities=save_probabilities,
             seg=seg,
         )
@@ -153,21 +167,15 @@ def download_prediction(file_path: str):
         HTTPException 403: If path is outside predictions directory
         HTTPException 404: If file does not exist
     """
-    # Resolve the requested path
-    requested_path = (PREDICTIONS_DIR / file_path).resolve()
-    
-    # Resolve the predictions directory to absolute path
-    predictions_dir = PREDICTIONS_DIR.resolve()
-    
-    # Security check: ensure the requested path is within predictions directory
+    # Security check: ensure the requested path stays within the predictions directory
     try:
-        requested_path.relative_to(predictions_dir)
-    except ValueError:
+        requested_path = resolve_within(PREDICTIONS_ROOT, file_path)
+    except UnsafePathError:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: file is outside predictions directory",
         )
-    
+
     # Check if file exists
     if not requested_path.exists():
         raise HTTPException(
@@ -206,44 +214,28 @@ def class_analysis(request: ClassAnalysisRequest):
         HTTPException 500: If analysis fails
     """
     try:
-        # Validate that mask_path is within predictions directory
-        mask_path_obj = Path(request.mask_path)
-        predictions_dir = PREDICTIONS_DIR.resolve()
-        
-        if mask_path_obj.is_absolute():
-            # Path is absolute - validate it's within predictions directory
-            requested_path = mask_path_obj.resolve()
-            try:
-                requested_path.relative_to(predictions_dir)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied: mask is outside predictions directory",
-                )
-        else:
-            # Path is relative - resolve relative to predictions directory
-            requested_path = (predictions_dir / request.mask_path).resolve()
-            try:
-                requested_path.relative_to(predictions_dir)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied: mask is outside predictions directory",
-                )
-        
+        # Validate that mask_path stays within the predictions directory
+        try:
+            requested_path = resolve_within(PREDICTIONS_ROOT, request.mask_path)
+        except UnsafePathError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: mask is outside predictions directory",
+            )
+
         # Validate that file exists
         if not requested_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Mask file not found: {requested_path}",
             )
-        
+
         if not requested_path.is_file():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Path is not a file: {requested_path}",
             )
-        
+
         # Validate classes
         valid_classes = {1, 2, 3}  # Only tumor classes
         invalid_classes = set(request.classes) - valid_classes
@@ -276,13 +268,18 @@ def class_analysis(request: ClassAnalysisRequest):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mask file not found",
         )
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-        
+
+    except HTTPException:
+        # Re-raise HTTPExceptions raised above (403/404) as-is instead of
+        # letting the catch-all below flatten them into a 500.
+        raise
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -306,44 +303,28 @@ def individual_class_analysis(request: ClassAnalysisRequest):
         HTTPException 500: If analysis fails
     """
     try:
-        # Validate that mask_path is within predictions directory
-        mask_path_obj = Path(request.mask_path)
-        predictions_dir = PREDICTIONS_DIR.resolve()
-        
-        if mask_path_obj.is_absolute():
-            # Path is absolute - validate it's within predictions directory
-            requested_path = mask_path_obj.resolve()
-            try:
-                requested_path.relative_to(predictions_dir)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied: mask is outside predictions directory",
-                )
-        else:
-            # Path is relative - resolve relative to predictions directory
-            requested_path = (predictions_dir / request.mask_path).resolve()
-            try:
-                requested_path.relative_to(predictions_dir)
-            except ValueError:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied: mask is outside predictions directory",
-                )
-        
+        # Validate that mask_path stays within the predictions directory
+        try:
+            requested_path = resolve_within(PREDICTIONS_ROOT, request.mask_path)
+        except UnsafePathError:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: mask is outside predictions directory",
+            )
+
         # Validate that file exists
         if not requested_path.exists():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Mask file not found: {requested_path}",
             )
-        
+
         if not requested_path.is_file():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Path is not a file: {requested_path}",
             )
-        
+
         # Calculate individual class analysis
         class_analysis = calculate_individual_class_analysis(
             mask_path=requested_path,
@@ -369,13 +350,18 @@ def individual_class_analysis(request: ClassAnalysisRequest):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mask file not found",
         )
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-        
+
+    except HTTPException:
+        # Re-raise HTTPExceptions raised above (403/404) as-is instead of
+        # letting the catch-all below flatten them into a 500.
+        raise
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -424,8 +410,21 @@ def research_methods():
 
 @router.get("/research/model-info")
 def research_model_info(checkpoint_path: str | None = None):
-    """Return model metadata; optionally read validation scores from checkpoint."""
-    ckpt = Path(checkpoint_path) if checkpoint_path else None
+    """Return model metadata; optionally read validation scores from checkpoint.
+
+    `checkpoint_path`, if supplied, must resolve inside OUTPUTS_ROOT — it is
+    loaded with `torch.load`, so arbitrary client-supplied paths are rejected
+    rather than passed through.
+    """
+    ckpt = None
+    if checkpoint_path:
+        try:
+            ckpt = resolve_within(OUTPUTS_ROOT, checkpoint_path)
+        except UnsafePathError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
     return {
         "status": "success",
         "model": get_model_info(ckpt),
