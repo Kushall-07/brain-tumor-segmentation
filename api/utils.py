@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import time
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -12,9 +13,40 @@ import numpy as np
 
 from fastapi import UploadFile
 
+from api.config import PREDICTIONS_RETENTION_SECONDS, UPLOADS_RETENTION_SECONDS
 from api.schemas import ModalityPaths
 
 logger = logging.getLogger(__name__)
+
+
+def prune_old_directories(base_dir: Union[str, Path], max_age_seconds: float, prefix: str = "") -> None:
+    """Delete direct subdirectories of `base_dir` older than `max_age_seconds`.
+
+    Age is based on each subdirectory's modification time. This is called
+    opportunistically whenever a new session/prediction directory is created
+    so `uploads/` and `outputs/predictions/` don't grow without bound, without
+    needing a separate cleanup scheduler.
+    """
+    base_path = Path(base_dir)
+    if not base_path.exists():
+        return
+
+    now = time.time()
+    try:
+        entries = list(base_path.iterdir())
+    except OSError:
+        return
+
+    for entry in entries:
+        if not entry.is_dir() or (prefix and not entry.name.startswith(prefix)):
+            continue
+        try:
+            age_seconds = now - entry.stat().st_mtime
+        except OSError:
+            continue
+        if age_seconds > max_age_seconds:
+            shutil.rmtree(entry, ignore_errors=True)
+            logger.info("Pruned stale directory (age=%.0fs): %s", age_seconds, entry)
 
 
 def create_upload_session(base_dir: Union[str, Path] = "uploads") -> Path:
@@ -28,6 +60,7 @@ def create_upload_session(base_dir: Union[str, Path] = "uploads") -> Path:
     """
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
+    prune_old_directories(base_path, UPLOADS_RETENTION_SECONDS, prefix="patient_")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_id = uuid.uuid4().hex[:8]
@@ -50,6 +83,7 @@ def create_prediction_dir(base_dir: Union[str, Path] = "outputs/predictions") ->
     """
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
+    prune_old_directories(base_path, PREDICTIONS_RETENTION_SECONDS, prefix="prediction_")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_id = uuid.uuid4().hex[:8]
