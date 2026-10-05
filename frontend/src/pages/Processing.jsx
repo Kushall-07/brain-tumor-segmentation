@@ -4,7 +4,12 @@ import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import predictionService from '../services/predictionService';
 import { consumePendingUploadFiles } from '../utils/pendingUpload';
 
-const POLL_INTERVAL_MS = 1000;
+const POLL_INITIAL_INTERVAL_MS = 1000;
+const POLL_MAX_INTERVAL_MS = 5000;
+const POLL_BACKOFF_FACTOR = 1.3;
+// Safety net if a job stalls server-side (e.g. GPU hang) — without this the
+// UI would poll forever with no feedback to the user.
+const POLL_TIMEOUT_MS = 10 * 60 * 1000;
 
 function buildUploadSessionKey(uploadedFiles) {
   if (!uploadedFiles) return '';
@@ -60,15 +65,20 @@ export default function Processing() {
   const [backendMessage, setBackendMessage] = useState('');
   const [files, setFiles] = useState(null);
   const requestStartedRef = useRef(false);
-  const pollIntervalRef = useRef(null);
+  const pollTimeoutRef = useRef(null);
+  const pollStartedAtRef = useRef(null);
+  const currentPollDelayRef = useRef(POLL_INITIAL_INTERVAL_MS);
   const jobIdRef = useRef(null);
   const uploadSessionKeyRef = useRef('');
   const activeJobCreationRef = useRef(null);
+  // Holds the latest pollJobStatus so the recursive setTimeout below can call
+  // it without closing over the function's own binding directly.
+  const pollJobStatusRef = useRef(null);
 
   const stopPolling = useCallback(() => {
-    if (pollIntervalRef.current !== null) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
+    if (pollTimeoutRef.current !== null) {
+      clearTimeout(pollTimeoutRef.current);
+      pollTimeoutRef.current = null;
     }
   }, []);
 
@@ -90,6 +100,19 @@ export default function Processing() {
   }, [navigate, stopPolling]);
 
   const pollJobStatus = useCallback(async (jobId, uploadedFiles) => {
+    if (
+      pollStartedAtRef.current !== null &&
+      Date.now() - pollStartedAtRef.current > POLL_TIMEOUT_MS
+    ) {
+      stopPolling();
+      setStatus('error');
+      setError({
+        status: 0,
+        message: 'Analysis timed out. The server may be overloaded or the job may have stalled — please try again.',
+      });
+      return;
+    }
+
     try {
       const jobStatus = await predictionService.getPredictionStatus(jobId);
 
@@ -112,7 +135,19 @@ export default function Processing() {
           status: 500,
           message: jobStatus.error || jobStatus.message || 'Analysis failed',
         });
+        return;
       }
+
+      // Still processing — poll again, backing off up to POLL_MAX_INTERVAL_MS
+      // so a long-running job doesn't hammer the server every second.
+      currentPollDelayRef.current = Math.min(
+        currentPollDelayRef.current * POLL_BACKOFF_FACTOR,
+        POLL_MAX_INTERVAL_MS
+      );
+      pollTimeoutRef.current = setTimeout(
+        () => pollJobStatusRef.current?.(jobId, uploadedFiles),
+        currentPollDelayRef.current
+      );
     } catch (pollError) {
       console.error('Status polling error:', pollError);
       stopPolling();
@@ -124,14 +159,15 @@ export default function Processing() {
     }
   }, [handleJobComplete, stopPolling]);
 
+  useEffect(() => {
+    pollJobStatusRef.current = pollJobStatus;
+  }, [pollJobStatus]);
+
   const beginPolling = useCallback((jobId, uploadedFiles) => {
     stopPolling();
-
+    pollStartedAtRef.current = Date.now();
+    currentPollDelayRef.current = POLL_INITIAL_INTERVAL_MS;
     pollJobStatus(jobId, uploadedFiles);
-
-    pollIntervalRef.current = setInterval(() => {
-      pollJobStatus(jobId, uploadedFiles);
-    }, POLL_INTERVAL_MS);
   }, [pollJobStatus, stopPolling]);
 
   const startPrediction = useCallback(async (uploadedFiles) => {
@@ -159,8 +195,9 @@ export default function Processing() {
     appendFormDataFiles(formData, uploadedFiles);
 
     try {
+      // The backend selects the checkpoint server-side (DEFAULT_CHECKPOINT_PATH) —
+      // the client never specifies which model weights run inference.
       const jobPromise = predictionService.startPrediction(formData, {
-        checkpoint_path: 'outputs/exp_swinunetr_4class_et_fixed/checkpoints/best_mean_dice.pt',
         save_probabilities: false,
       });
       activeJobCreationRef.current = jobPromise;

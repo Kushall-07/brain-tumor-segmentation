@@ -1,17 +1,38 @@
-import axios from 'axios';
+import api from './api';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 300000, // 5 minutes timeout for large file uploads
-});
+/**
+ * Normalize an axios error into the shape every predictionService method
+ * throws, so each call site below only needs one line instead of a
+ * repeated three-branch try/catch.
+ */
+function normalizeError(error, fallbackMessage) {
+  if (error.response) {
+    return {
+      status: error.response.status,
+      message: error.response.data?.detail || fallbackMessage,
+      data: error.response.data,
+      response: error.response,
+    };
+  }
+  if (error.request) {
+    return {
+      status: 0,
+      message: 'Network error - unable to connect to server',
+    };
+  }
+  return {
+    status: 0,
+    message: error.message || fallbackMessage,
+  };
+}
 
 export const predictionService = {
   /**
-   * Start an asynchronous prediction job by uploading MRI modalities
+   * Start an asynchronous prediction job by uploading MRI modalities.
+   * The backend selects the checkpoint server-side — only `save_probabilities`
+   * (and similar non-sensitive flags) belong in `params`.
    * @param {FormData} formData - FormData with t1, t1ce, t2, flair files
-   * @param {Object} params - Query parameters (checkpoint_path, save_probabilities)
+   * @param {Object} params - Query parameters (e.g. save_probabilities)
    * @returns {Promise<Object>} API response with job_id and status
    */
   async startPrediction(formData, params = {}) {
@@ -24,23 +45,7 @@ export const predictionService = {
       });
       return response.data;
     } catch (error) {
-      if (error.response) {
-        throw {
-          status: error.response.status,
-          message: error.response.data.detail || 'Upload failed',
-          data: error.response.data,
-        };
-      } else if (error.request) {
-        throw {
-          status: 0,
-          message: 'Network error - unable to connect to server',
-        };
-      } else {
-        throw {
-          status: 0,
-          message: error.message || 'Request failed',
-        };
-      }
+      throw normalizeError(error, 'Upload failed');
     }
   },
 
@@ -54,23 +59,7 @@ export const predictionService = {
       const response = await api.get(`/predict/status/${jobId}`);
       return response.data;
     } catch (error) {
-      if (error.response) {
-        throw {
-          status: error.response.status,
-          message: error.response.data.detail || 'Status check failed',
-          data: error.response.data,
-        };
-      } else if (error.request) {
-        throw {
-          status: 0,
-          message: 'Network error - unable to connect to server',
-        };
-      } else {
-        throw {
-          status: 0,
-          message: error.message || 'Status request failed',
-        };
-      }
+      throw normalizeError(error, 'Status check failed');
     }
   },
 
@@ -78,7 +67,7 @@ export const predictionService = {
    * Upload MRI modalities and run brain tumor segmentation (legacy synchronous)
    * @deprecated Use startPrediction + getPredictionStatus instead
    * @param {Object} formData - FormData with t1, t1ce, t2, flair files
-   * @param {Object} params - Query parameters (checkpoint_path, save_probabilities)
+   * @param {Object} params - Query parameters (e.g. save_probabilities)
    * @returns {Promise<Object>} API response with prediction results
    */
   async uploadPrediction(formData, params = {}) {
@@ -94,10 +83,7 @@ export const predictionService = {
       const response = await api.get('/health');
       return response.data;
     } catch (error) {
-      throw {
-        status: error.response?.status || 0,
-        message: 'Health check failed',
-      };
+      throw normalizeError(error, 'Health check failed');
     }
   },
 
@@ -113,22 +99,7 @@ export const predictionService = {
       });
       return response.data;
     } catch (error) {
-      if (error.response) {
-        throw {
-          status: error.response.status,
-          message: error.response.data.detail || 'Download failed',
-        };
-      } else if (error.request) {
-        throw {
-          status: 0,
-          message: 'Network error - unable to connect to server',
-        };
-      } else {
-        throw {
-          status: 0,
-          message: error.message || 'Download request failed',
-        };
-      }
+      throw normalizeError(error, 'Download failed');
     }
   },
 
@@ -146,22 +117,7 @@ export const predictionService = {
       });
       return response.data;
     } catch (error) {
-      if (error.response) {
-        throw {
-          status: error.response.status,
-          message: error.response.data.detail || 'Class analysis failed',
-        };
-      } else if (error.request) {
-        throw {
-          status: 0,
-          message: 'Network error - unable to connect to server',
-        };
-      } else {
-        throw {
-          status: 0,
-          message: error.message || 'Class analysis request failed',
-        };
-      }
+      throw normalizeError(error, 'Class analysis failed');
     }
   },
 
@@ -178,22 +134,7 @@ export const predictionService = {
       });
       return response.data;
     } catch (error) {
-      if (error.response) {
-        throw {
-          status: error.response.status,
-          message: error.response.data.detail || 'Individual class analysis failed',
-        };
-      } else if (error.request) {
-        throw {
-          status: 0,
-          message: 'Network error - unable to connect to server',
-        };
-      } else {
-        throw {
-          status: 0,
-          message: error.message || 'Individual class analysis request failed',
-        };
-      }
+      throw normalizeError(error, 'Individual class analysis failed');
     }
   },
 
@@ -215,18 +156,9 @@ export const predictionService = {
         prediction_mask_path: predictionMaskPath,
         ground_truth_mask_path: groundTruthMaskPath,
       });
-      console.log('[VALIDATION] API RESPONSE:', response.data);
       return response.data.validation;
     } catch (error) {
-      if (error.response) {
-        throw {
-          status: error.response.status,
-          message: error.response.data.detail || 'Validation failed',
-          response: error.response,
-          data: error.response.data,
-        };
-      }
-      throw error;
+      throw normalizeError(error, 'Validation failed');
     }
   },
 };
