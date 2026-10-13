@@ -26,3 +26,9 @@ Thumbs.db
 .idea/
 node_modules/
 frontend/node_modules/
+
+# Presentation and review material (not pushed)
+ppt/
+PROJECT_COMPLETE_REVIEW_GUIDE.md
+PROJECT_COMPLETE_REVIEW_GUIDE.pdf
+results/
